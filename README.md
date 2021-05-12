@@ -1,6 +1,6 @@
-
-
-<img src="pic.assets/logo.png" alt="logo" style="zoom:25%;" />
+<div align="center">
+	<img src="pic.assets/logo.png" alt="Editor" width="200">
+</div>
 
 pocassist是一款全新的开源漏洞测试框架，无需代码知识也可实现对poc的在线编辑、管理、测试。
 
