@@ -12,24 +12,24 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 未经授权，使用pocassist攻击目标是非法的。pocassist仅用于安全测试目的。
 
-**为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。**
+为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。
 
 
 
-## 一 介绍
+## 介绍
 
-- **pocassist借鉴了xray优秀的规则体系。**基于CEL表达式定义poc规则。
-- **不仅仅是xray。**pocassist除了支持目录级漏洞的poc，还支持：
+- pocassist借鉴了xray优秀的规则体系。基于CEL表达式定义poc规则。
+- 不仅仅是xray。pocassist除了支持目录级漏洞的poc，还支持：
   - 服务器级漏洞
   - 参数级漏洞（替换完整参数  /  在参数后拼接url）
   - url级漏洞
   - 页面内容检测
   - 如果以上还不满足你的需求，还支持加载自定义脚本进行检测
 
-- **poc在线编辑。**提供了前端UI，可对poc规则进行在线编辑。
-- **所有poc均以json格式存入数据库。**因此支持**批量加载poc**，对**批量资产**进行漏洞检测。批量加载poc时，支持自定义搜索条件指定执行哪些poc。
-- **实现内存复用**以及对**并发的颗粒度控制**。使用更少的请求，更少的内存资源进行漏洞检测。
-- 支持**命令行**启动和**web端**启动。web端使用 gin + react 开发。
+- poc在线编辑。提供了前端UI，可对poc规则进行在线编辑。
+- 所有poc均以json格式存入数据库。因此支持批量加载poc，对批量资产进行漏洞检测。批量加载poc时，支持自定义搜索条件指定执行哪些poc。
+- 实现内存复用以及对并发的颗粒度控制。使用更少的请求，更少的内存资源进行漏洞检测。
+- 支持命令行启动和web端启动。web端使用 gin + react 开发。
 
 
 
@@ -45,9 +45,9 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 
 
-### 1.1 web端
+### web端
 
-#### 1.1.1 漏洞管理
+#### 漏洞管理
 
 漏洞表：
 
@@ -57,7 +57,7 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 ![漏洞描述详情](pic.assets/漏洞描述详情.jpg)
 
-#### 1.1.2 poc编辑测试
+#### poc编辑测试
 
 poc表：
 
@@ -71,15 +71,15 @@ poc编辑页：
 
 ![poc运行结果](pic.assets/poc运行结果.jpg)
 
-### 1.2 命令行
+### 命令行
 
 通过命令行对目标url进行验证：
 
 ![命令行执行](pic.assets/命令行执行.jpg)
 
-## 二 安装
+## 安装
 
-暂时可下载源码编译安装，**下一版将提供编译好的二进制 && 打包好的前端 && Docker镜像。**
+暂时可下载源码编译安装，下一版将提供编译好的二进制 && 打包好的前端 && Docker镜像。
 
 ```
 git clone https://github.com/jweny/pocassist.git
@@ -93,11 +93,11 @@ go build -o pocassist
 ./pocassist
 ```
 
-## 三 使用
+## 使用
 
 ![help-1](pic.assets/help-1.jpg)
 
-### 3.1 web端
+### web端
 
 ```
 # 启动web后端 默认1231端口
@@ -113,7 +113,7 @@ yarn start
 
 ==========详细的web端使用手册正在疯狂编写中...==============
 
-### 3.2 命令行
+### 命令行
 
 ```
 ./pocassist cli -h
@@ -158,7 +158,7 @@ yarn start
     ./pocassist cli -lp affects  -c directory -u http://xxx.xxx.xxx.xxx
     ```
 
-## 四 todo
+## todo
 
 - 由于实现的细节较多，详细的规则编辑使用手册正在疯狂编写中
 
@@ -168,9 +168,11 @@ yarn start
 
 - 发现潜在的bug
 
+- server api 优化
+
   
 
-## 五 参考
+## 参考
 
 - https://github.com/chaitin/xray/tree/master/pocs
 - https://phith0n.github.io/xray-poc-generation/
