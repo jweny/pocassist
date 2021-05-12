@@ -1,0 +1,70 @@
+.apply-login-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: url("../../assets/images/bg.jpg") center 100% no-repeat;
+  background-size: cover;
+  .apply-login-page {
+    position: relative;
+    z-index: 10;
+    width: 512px;
+    margin: 180px auto 0;
+    box-shadow: 0 0 10px 4px rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 40px;
+    .login-title {
+      color: #fff;
+      font-size: 34px;
+      font-family: "PingFang SC";
+      font-weight: 600;
+    }
+
+    .ant-form {
+      margin-top: 20px;
+      .ant-form-item {
+        margin-bottom: 14px;
+        .ant-form-item-label > label {
+          color: #fff;
+        }
+        .ant-input-affix-wrapper {
+          background: transparent;
+          .ant-input-prefix,
+          .ant-input {
+            color: #fff;
+            background: transparent;
+          }
+          .login-captcha {
+            border: none;
+            margin: -6.5px -11px;
+            border-radius: 0 2px 2px 0;
+            max-width: 120px;
+            height: 40px;
+            display: block;
+            cursor: pointer;
+          }
+          // 去掉浏览器自动填充的背景色
+          input:-webkit-autofill,
+          input:-webkit-autofill:hover,
+          input:-webkit-autofill:focus,
+          input:-webkit-autofill:active {
+            -webkit-transition-delay: 99999s;
+            -webkit-transition: color 99999s ease-out,
+              background-color 99999s ease-out;
+          }
+        }
+      }
+    }
+    .ant-divider {
+      margin: 40px auto;
+      width: 80%;
+      min-width: 80%;
+    }
+    .login-footer {
+      text-align: center;
+      color: #fff;
+    }
+  }
+}

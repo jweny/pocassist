@@ -1,0 +1,86 @@
+#root > .ant-layout {
+  height: 100%;
+  min-height: 100vh;
+  background: #fff;
+}
+
+.main-wrap {
+  display: flex;
+  background-color: #f6f8fa;
+  flex-direction: column;
+}
+
+.main-content {
+  margin: 20px;
+  flex: 1;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.ant-layout-header {
+  padding: 0;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  .header-left-wrap {
+    float: left;
+    .header-left {
+      > span {
+        font-size: 18px;
+        padding: 0 20px;
+        line-height: 64px;
+        cursor: pointer;
+      }
+    }
+  }
+  .header-right {
+    float: right;
+    width: 800px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 20px;
+    .ant-dropdown-link {
+      cursor: pointer;
+      margin-left: 20px;
+    }
+  }
+}
+
+.ant-layout-sider {
+  .logo {
+    margin: 10px auto;
+    text-align: center;
+    overflow: hidden;
+  }
+}
+.un-auth-layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  .footer {
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #aaa;
+    line-height: 14px;
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+// 修改全局滚动条样式
+//滚动条的宽度
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+//滚动条的滑块
+::-webkit-scrollbar-thumb {
+  background-color: rgba(144, 147, 153, 0.3);
+  border-radius: 3px;
+}

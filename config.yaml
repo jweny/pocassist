@@ -1,0 +1,36 @@
+# HTTP配置
+httpConfig:
+  # 127.0.0.1:8080
+  proxy: ""
+  # 读取http响应超时时间
+  http_timeout: 10
+  # tcp 超时时间
+  dail_timeout: 5
+  # udp 超时时间
+  udp_timeout: 5
+  # 每秒最大请求数
+  max_qps: 100
+  # 单个请求最大允许的跳转次数
+  max_redirect: 5
+  headers:
+    # 默认 UA
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"
+
+# 数据库配置
+dbConfig:
+  host: "127.0.0.1"
+  password: ""
+  port: ""
+  user: ""
+  database: "pocassist"
+  timeout: "3s"
+
+# 插件配置
+pluginsConfig:
+  # 并发量:同时运行的poc数量
+  parallel: 8
+
+# 反连平台配置: 目前使用 ceye.io
+reverse:
+  api_key: ""
+  domain: ""
