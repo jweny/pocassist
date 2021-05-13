@@ -1,7 +1,6 @@
 import Login from "../views/login";
 import VulManage from "../views/vul";
 import VulRules from "../views/rules";
-import { Module, Product, Script } from "../views/modules";
 
 interface IRouteMeta {
   name: string;
@@ -26,33 +25,6 @@ export const routes: IRoute[] = [
     component: Login,
     hidden: true
   },
-  // {
-  //   path: "/module",
-  //   key: "/module",
-  //   component: Module,
-  //   meta: {
-  //     name: "模块管理",
-  //     icon: "icon-xitongshezhi"
-  //   }
-  // },
-  // {
-  //   path: "/product",
-  //   key: "/product",
-  //   component: Product,
-  //   meta: {
-  //     name: "组件管理",
-  //     icon: "icon-qita"
-  //   }
-  // },
-  // {
-  //   path: "/script",
-  //   key: "/script",
-  //   component: Script,
-  //   meta: {
-  //     name: "脚本管理",
-  //     icon: "icon-bianji"
-  //   }
-  // },
   {
     path: "/vul",
     key: "/vul",
@@ -63,23 +35,14 @@ export const routes: IRoute[] = [
     }
   },
   {
-    path: "/vulRules",
-    key: "/vulRules",
+    path: "/poc",
+    key: "/poc",
     component: VulRules,
     meta: {
       name: "漏洞规则",
-      icon: "icon-chakan-copy"
+      icon: "icon--_xitongrizhi"
     }
   }
-  // {
-  //   path: "/xml",
-  //   key: "/xml",
-  //   component: XmlManage,
-  //   meta: {
-  //     name: "XML管理",
-  //     icon: "icon--_xitongrizhi"
-  //   }
-  // }
 ];
 
 function flattenRoute(routes: IRoute[]): IRoute[] {

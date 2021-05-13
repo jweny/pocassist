@@ -1,26 +1,24 @@
 import React from "react";
 import { ColumnProps } from "antd/es/table";
-import { VulDataProps } from "../../../api/vul";
 import { FormColumnProps } from "./SearchForm";
 import { RuleDataProps } from "../../../api/rule";
 
 export const getAllColumns: () => ColumnProps<RuleDataProps>[] = () => {
   let allColumns: ColumnProps<RuleDataProps>[] = [
-    { title: "ID", dataIndex: "id", ellipsis: true },
-    { title: "漏洞编号", dataIndex: "vul_id", ellipsis: true },
+    { title: "漏洞编号", dataIndex: "vul_id", ellipsis: false },
     {
-      title: "是否启用",
+      title: "状态",
       dataIndex: "enable",
       ellipsis: true,
-      render: (value: boolean) => (value ? "是" : "否")
+      render: (value: boolean) => (value ? "启用" : "禁用")
     },
     {
-      title: "json_poc名称",
+      title: "poc名称",
       dataIndex: "json_poc",
-      ellipsis: true,
+      ellipsis: false,
       render: (value: any) => value.name
     },
-    { title: "漏洞描述", dataIndex: "desp_name", ellipsis: true },
+    { title: "漏洞名", dataIndex: "desp_name", ellipsis: true },
     {
       title: "影响类型",
       dataIndex: "affects",
@@ -51,19 +49,5 @@ export const richFormColumns: FormColumnProps[] = [
     name: "exploit",
     label: "Exploit"
   }
-  // {
-  //   name: "remarks",
-  //   label: "备注"
-  // }
 ];
 
-export const criteriaOperator = ["AND", "OR", "XOR", "ONE"];
-export const criterionOperator = [
-  "equal",
-  "not equal",
-  "contains",
-  "not contains",
-  "greater than",
-  "less than",
-  "pattern match"
-];

@@ -3,7 +3,6 @@ import { Button, Checkbox, Col, Modal, Row } from "antd";
 import "./index.less";
 import { ColumnProps } from "antd/es/table";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
-import { AppstoreOutlined } from "@ant-design/icons/lib";
 
 interface CustomColumnsProps {
   className?: string;

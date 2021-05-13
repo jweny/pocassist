@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import ReactJson from "react-json-view";
 import {
   Alert,
   Button,
@@ -16,33 +17,12 @@ import {
 import { ModalProps } from "antd/es/modal";
 import { FormColumnProps } from "./SearchForm";
 import RunTest, { getId } from "./RunTest";
-import { ModuleDataProps } from "../../../api/module";
 import {
-  createProduct,
-  getProductList,
-  ProductDataProps
-} from "../../../api/product";
-import VulContext from "../../../store/vul/store";
-import { ScriptDataProps } from "../../../api/script";
-import {
-  createVul,
-  createXml,
-  getVulDetail,
   getVulList,
-  getVulXml,
-  getXmlList,
-  sendVul,
-  updateVul,
-  updateXml,
   VulDataProps
 } from "../../../api/vul";
 import { getUserInfo } from "../../../utils/auth";
-import BraftEditor, { BuiltInControlType, ControlType } from "braft-editor";
 import "braft-editor/dist/index.css";
-import XmlContext from "../../../store/xml/store";
-import { richFormColumns } from "./columns";
-import { PlusOutlined } from "@ant-design/icons/lib";
-import AddModal from "../../modules/components/AddModal";
 import {
   createRule,
   getRuleList,
@@ -57,14 +37,13 @@ interface AddVulProps extends ModalProps {
   type?: string;
 }
 const VulModal: React.FC<AddVulProps> = props => {
-  // console.log(props);
   let { selected, type = "vul" } = props;
   const testRef = useRef(null);
   const [step, setStep] = useState<number>(1);
   const [ruleData, setRuleData] = useState<any>(null);
   // 获取漏洞描述（vul）列表
   const [vulList, setVulList] = useState<VulDataProps[]>([]);
-  // 添加完成后将vul和xml的id暂存，如果xml保存出错或者运行测试之后又要修改前面的信息，通过id修改已有漏洞或xml
+  // 添加完成后将vul和json的id暂存，如果保存出错或者运行测试之后又要修改前面的信息，通过id修改已有漏洞
   const [vulAddId, setVulAddId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState<boolean>(true);
   const [show, setShow] = useState<boolean>(false);
@@ -140,8 +119,7 @@ const VulModal: React.FC<AddVulProps> = props => {
       writer_id: userInfo?.id,
       ...xml
     };
-    console.log(finalData);
-    testRule(ruleData.id, finalData)
+    testRule(finalData)
       .then(res => {
         setTestResult(res.data);
       })
@@ -153,11 +131,11 @@ const VulModal: React.FC<AddVulProps> = props => {
   const formColumns: FormColumnProps[] = [
     {
       name: "vul_id",
-      label: "漏洞编号"
+      label: "漏洞编号(poc-db-)"
     },
     {
       name: "affects",
-      label: "影响类型",
+      label: "规则类型",
       render: () => {
         return (
           <Select placeholder="请选择" style={{ width: 300 }}>
@@ -206,7 +184,6 @@ const VulModal: React.FC<AddVulProps> = props => {
           </Select>
         );
       }
-      // rules: [{ required: true }]
     }
   ];
 
@@ -226,7 +203,7 @@ const VulModal: React.FC<AddVulProps> = props => {
           <React.Fragment>
             <span style={{ float: "left", lineHeight: "32px" }}>测试url：</span>
             <Input
-              style={{ float: "left", width: "200px" }}
+              style={{ float: "left", width: "400px" }}
               onChange={event => setTarget(event.target.value)}
             />
             <Button
@@ -239,7 +216,7 @@ const VulModal: React.FC<AddVulProps> = props => {
               }}
               loading={loading}
             >
-              启动测试
+              测试规则
             </Button>
             <Button
               type="primary"
@@ -286,7 +263,7 @@ const VulModal: React.FC<AddVulProps> = props => {
             )
           )}
         </Form>
-        <h3 className="poc_title">json_poc：</h3>
+        <h3 className="poc_title">规则内容：</h3>
         <RunTest
           ref={testRef}
           testData={ruleData?.json_poc}
@@ -301,11 +278,12 @@ const VulModal: React.FC<AddVulProps> = props => {
           setShow(false);
           setTestResult([]);
         }}
-        title="测试结果"
+        title="poc运行结果"
         className="test-result-wrap"
       >
         <Spin spinning={loading} size="large">
-          <div style={{ minHeight: 500 }}>{JSON.stringify(testResult)}</div>
+          {/*<div style={{ minHeight: 500 }}>{JSON.stringify(testResult)}</div>*/}
+          <ReactJson src={testResult} name={false} displayDataTypes={false}/>
         </Spin>
       </Modal>
     </Modal>

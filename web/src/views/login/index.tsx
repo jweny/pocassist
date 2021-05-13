@@ -29,7 +29,7 @@ const Login: React.FC<RouteComponentProps> = (props: RouteComponentProps) => {
   return (
     <div className="apply-login-wrap">
       <div className="apply-login-page">
-        <h2 className="login-title">漏洞管理系统</h2>
+        <h2 className="login-title">POCASSIST</h2>
         <Form
           {...formItemLayout}
           form={form}
@@ -39,11 +39,11 @@ const Login: React.FC<RouteComponentProps> = (props: RouteComponentProps) => {
         >
           <Fragment>
             <Form.Item
-              label="账号"
+              label="用户"
               name="username"
               rules={[{ required: true }]}
             >
-              <Input placeholder="请输入账号" prefix={<MobileOutlined />} />
+              <Input placeholder="请输入用户名" prefix={<MobileOutlined />} />
             </Form.Item>
             <Form.Item
               label="密码"
@@ -57,24 +57,6 @@ const Login: React.FC<RouteComponentProps> = (props: RouteComponentProps) => {
                 type="password"
               />
             </Form.Item>
-            {/*<Form.Item*/}
-            {/*  label="验证码"*/}
-            {/*  name="captcha_value"*/}
-            {/*  rules={[{ required: true }]}*/}
-            {/*>*/}
-            {/*  <Input*/}
-            {/*    placeholder="请输入验证码"*/}
-            {/*    maxLength={40}*/}
-            {/*    prefix={<KeyOutlined />}*/}
-            {/*    suffix={*/}
-            {/*      <img*/}
-            {/*        src={captcha.image}*/}
-            {/*        className="login-captcha"*/}
-            {/*        onClick={handleGetCaptcha}*/}
-            {/*      />*/}
-            {/*    }*/}
-            {/*  />*/}
-            {/*</Form.Item>*/}
           </Fragment>
 
           <Form.Item wrapperCol={{ span: 24 }}>
@@ -85,7 +67,7 @@ const Login: React.FC<RouteComponentProps> = (props: RouteComponentProps) => {
         </Form>
         <Divider />
         <div className="login-footer">
-          <p>Copyright 2005-2020 360.com 版权所有 360互联网中心</p>
+          <p>Copyright https://github.com/jweny</p>
         </div>
       </div>
     </div>

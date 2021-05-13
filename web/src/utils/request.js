@@ -1,7 +1,6 @@
 import axios from "axios";
 import qs from "qs";
 import { getToken } from "./auth";
-import { removeToken } from "./auth";
 import { message } from "antd";
 
 // create an axios instance
@@ -45,14 +44,6 @@ service.interceptors.response.use(
   },
   async error => {
     if (error.response?.status === 401) {
-      // return error;
-      // const history = useHistory()
-      // const dispatch = useDispatch()
-      // dispatch({
-      //   type: 'SET_USER_LOGOUT',
-      // })
-      // history.push('/login')
-      // removeToken();
       window.location.href = "/";
     }
     message.error(error.toString());

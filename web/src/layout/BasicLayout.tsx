@@ -2,7 +2,7 @@ import React from "react";
 import { Redirect, Route as ReactRoute, Switch } from "react-router-dom";
 import { layoutRoutes } from "../router";
 
-const BasicLayout: React.FC<{}> = props => {
+const BasicLayout: React.FC = props => {
   return (
     <Switch>
       {layoutRoutes
@@ -16,10 +16,6 @@ const BasicLayout: React.FC<{}> = props => {
               key={route.key}
               path={route.path}
               render={props => {
-                // if(props.route.redirect) {
-                // 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-                // 	 return <Redirect to={props.route.redirect!} push />;
-                // }
                 return <PageComponents {...props} />;
               }}
             />

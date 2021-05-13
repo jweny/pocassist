@@ -1,42 +1,16 @@
-import React, { useEffect, useImperativeHandle, useState } from "react";
-import { ColumnProps } from "antd/es/table";
+import React, { useEffect, useState } from "react";
 import {
   Button,
-  Col,
-  Dropdown,
-  Form,
   Input,
-  Menu,
-  message,
   Modal,
   Popconfirm,
-  Radio,
-  Row,
-  Select,
   Space,
-  Table,
   Tabs
 } from "antd";
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons/lib";
 import { getId } from "./RunTest";
-import { debounce } from "lodash";
-import { criteriaOperator, criterionOperator } from "./columns";
 import RuleComponent from "./RuleComponent";
 
 export interface TestComponentProps {
-  // data: {
-  //   request?: RequestProps;
-  //   response?: { var: ResponseProps };
-  //   criteria?: CriterionProps;
-  //   id?: string;
-  //   method?: string;
-  //   path?: string;
-  //   header?: any;
-  //   body?: string;
-  //   follow_redirects?: boolean;
-  //   search?: string;
-  //   expression?: string;
-  // };
   data: any;
   type: string;
   setData: (value: TestComponentProps["data"]) => void;
@@ -52,35 +26,9 @@ interface RequestProps {
   name?: string;
   data?: any;
 }
-interface ResponseProps {
-  "#text"?: string;
-  "@description"?: string;
-  "@name"?: string;
-  "@source"?: string;
-}
-export interface CriterionProps {
-  "@operator"?: string;
-  "@value"?: string;
-  "@variable"?: string;
-  "@comment"?: string;
-  criterion?: CriterionProps[];
-  criteria?: CriterionProps[];
-  children?: CriterionProps[];
-  key?: string;
-  id: string;
-}
+
 const TestComponent: React.FC<TestComponentProps> = props => {
   const { data } = props;
-  console.log(data);
-  const [test, setTest] = useState<CriterionProps>({} as CriterionProps);
-  const [expand, setExpand] = useState<string[]>([]);
-
-  useEffect(() => {
-    setTest(data?.criteria as CriterionProps);
-    setExpand(prev =>
-      Array.from(new Set([...prev, data?.criteria?.id ?? "1"]))
-    );
-  }, [data]);
 
   const handleRequestChange = (
     id: number,
@@ -103,17 +51,6 @@ const TestComponent: React.FC<TestComponentProps> = props => {
     props.setData(current);
   };
 
-  const handleReset = () => {
-    const current = {
-      id: data.id,
-      request: {},
-      response: {
-        var: {}
-      }
-    };
-    props.setData(current);
-  };
-
   const handleDelete = () => {
     props.delete(data.id as string);
   };
@@ -123,7 +60,7 @@ const TestComponent: React.FC<TestComponentProps> = props => {
       add();
     } else {
       Modal.confirm({
-        title: "确认删除该规则吗？",
+        title: "真的删除？",
         onOk() {
           remove(targetKey);
         }
@@ -171,17 +108,10 @@ const TestComponent: React.FC<TestComponentProps> = props => {
         onEdit={onEdit}
         tabBarExtraContent={
           <Space>
-            {/*自动保存吧，体验好一点*/}
-            {/*<Button type="link" onClick={() => generateJson()}>*/}
-            {/*  保存*/}
-            {/*</Button>*/}
-            {/*<Popconfirm title="确定重置吗？" onConfirm={handleReset}>*/}
-            {/*  <Button type="link">重置</Button>*/}
-            {/*</Popconfirm>*/}
             {props.type === "groups" && (
-              <Popconfirm title="确定删除吗" onConfirm={handleDelete}>
+              <Popconfirm title="真的删除？" onConfirm={handleDelete}>
                 <Button type="link" danger>
-                  删除
+                  删除rules
                 </Button>
               </Popconfirm>
             )}

@@ -2,8 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useReducer,
-  useRef,
   useState
 } from "react";
 import {
@@ -11,36 +9,21 @@ import {
   Form,
   Input,
   message,
-  Modal,
   Popconfirm,
-  Select,
   Space,
   Table
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons/lib";
 import CustomColumns from "../../../components/CustomColumns";
-import { allModuleColumns, allProductColumns } from "./columns";
+import { allProductColumns } from "./columns";
 import { ColumnProps } from "antd/es/table";
 import "../index.less";
-import {
-  createModule,
-  deleteModule,
-  getModuleList,
-  updateModule
-} from "../../../api/module";
 import {
   createProduct,
   deleteProduct,
   getProductList,
   updateProduct
-} from "../../../api/product";
-import {
-  createScript,
-  deleteScript,
-  getScriptList,
-  getScriptTypes,
-  updateScript
-} from "../../../api/script";
+} from "../../../api/webapp";
 import AddModal from "./AddModal";
 import { getVulBasic } from "../../../api/vul";
 
@@ -77,14 +60,10 @@ const ModuleComponent: React.FC<ModuleComponentProps> = props => {
 
   const getAllColumns = useCallback(() => {
     switch (props.type) {
-      case "script":
-        return allScriptColumns;
-      case "module":
-        return allModuleColumns;
       case "product":
         return allProductColumns;
       default:
-        return allModuleColumns;
+        return allProductColumns;
     }
   }, [props.type, allScriptColumns]);
 
@@ -106,17 +85,11 @@ const ModuleComponent: React.FC<ModuleComponentProps> = props => {
       setLoading(true);
       let api;
       switch (props.type) {
-        case "module":
-          api = getModuleList;
-          break;
         case "product":
           api = getProductList;
           break;
-        case "script":
-          api = getScriptList;
-          break;
         default:
-          api = getModuleList;
+          api = getProductList;
       }
       api(params)
         .then(res => {
@@ -194,17 +167,11 @@ const ModuleComponent: React.FC<ModuleComponentProps> = props => {
     // console.log(id);
     let api;
     switch (props.type) {
-      case "script":
-        api = deleteScript;
-        break;
-      case "module":
-        api = deleteModule;
-        break;
       case "product":
         api = deleteProduct;
         break;
       default:
-        api = deleteModule;
+        api = deleteProduct;
     }
     api(id).then(res => {
       // console.log(res);
@@ -249,17 +216,11 @@ const ModuleComponent: React.FC<ModuleComponentProps> = props => {
     console.log(value);
     let api;
     switch (props.type) {
-      case "script":
-        api = !!selected ? updateScript : createScript;
-        break;
-      case "module":
-        api = !!selected ? updateModule : createModule;
-        break;
       case "product":
         api = !!selected ? updateProduct : createProduct;
         break;
       default:
-        api = !!selected ? updateModule : createModule;
+        api = !!selected ? updateProduct : createProduct;
     }
     api(value, selected?.id).then(res => {
       console.log(res);

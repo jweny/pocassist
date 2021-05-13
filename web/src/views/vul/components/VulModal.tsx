@@ -13,31 +13,22 @@ import {
 } from "antd";
 import { ModalProps } from "antd/es/modal";
 import { FormColumnProps } from "./SearchForm";
-import RunTest from "./RunTest";
-import { ModuleDataProps } from "../../../api/module";
 import {
   createProduct,
   getProductList,
   ProductDataProps
-} from "../../../api/product";
+} from "../../../api/webapp";
 import VulContext from "../../../store/vul/store";
-import { ScriptDataProps } from "../../../api/script";
 import {
   createVul,
-  createXml,
   getVulDetail,
   getVulList,
-  getVulXml,
-  getXmlList,
-  sendVul,
   updateVul,
-  updateXml,
   VulDataProps
 } from "../../../api/vul";
 import { getUserInfo } from "../../../utils/auth";
 import BraftEditor, { BuiltInControlType, ControlType } from "braft-editor";
 import "braft-editor/dist/index.css";
-import XmlContext from "../../../store/xml/store";
 import { richFormColumns } from "./columns";
 import { PlusOutlined } from "@ant-design/icons/lib";
 import AddModal from "../../modules/components/AddModal";
@@ -79,24 +70,6 @@ const VulModal: React.FC<AddVulProps> = props => {
 
   const formColumns: FormColumnProps[] = [
     {
-      name: "verifiability",
-      label: "扫描类型",
-      render: () => {
-        return (
-          <Select placeholder="请选择" style={{ width: 200 }}>
-            {state.basic?.VulScanType.map(item => {
-              return (
-                <Select.Option value={item.name} key={item.name}>
-                  {item.label}
-                </Select.Option>
-              );
-            })}
-          </Select>
-        );
-      }
-      // rules: [{ required: true }]
-    },
-    {
       name: "webapp",
       label: "影响组件",
       render: () => {
@@ -123,26 +96,7 @@ const VulModal: React.FC<AddVulProps> = props => {
           </Select>
         );
       }
-      // rules: [{ required: true }]
     },
-    // {
-    //   name: "module",
-    //   label: "所属模块",
-    //   render: () => {
-    //     return (
-    //       <Select placeholder="请选择" style={{ width: 200 }}>
-    //         {state.moduleList?.map(item => {
-    //           return (
-    //             <Select.Option value={item.id as number} key={item.id}>
-    //               {item.name}
-    //             </Select.Option>
-    //           );
-    //         })}
-    //       </Select>
-    //     );
-    //   },
-    //   rules: [{ required: true }]
-    // },
     {
       name: "severity",
       label: "漏洞等级",
@@ -159,7 +113,6 @@ const VulModal: React.FC<AddVulProps> = props => {
           </Select>
         );
       }
-      // rules: [{ required: true }]
     },
     {
       name: "category",
@@ -177,25 +130,7 @@ const VulModal: React.FC<AddVulProps> = props => {
           </Select>
         );
       }
-      // rules: [{ required: true }]
     },
-    // {
-    //   name: "script",
-    //   label: "生效脚本名称",
-    //   render: () => {
-    //     return (
-    //       <Select placeholder="请选择" style={{ width: 200 }}>
-    //         {state.scriptList?.map(item => {
-    //           return (
-    //             <Select.Option value={item.id as number} key={item.id}>
-    //               {item.name}
-    //             </Select.Option>
-    //           );
-    //         })}
-    //       </Select>
-    //     );
-    //   }
-    // },
     {
       name: "language",
       label: "漏洞语言",
@@ -294,18 +229,6 @@ const VulModal: React.FC<AddVulProps> = props => {
     });
   };
 
-  const handleSend = () => {
-    setLoading(true);
-    sendVul(vulData?.id ?? vulAddId)
-      .then((res: any) => {
-        console.log(res);
-        message.success(res.data);
-        // setTestResult(res.data);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
 
   const height = document.documentElement.offsetHeight;
 
@@ -346,64 +269,9 @@ const VulModal: React.FC<AddVulProps> = props => {
               >
                 保存
               </Button>
-              {/*<Button*/}
-              {/*  type="primary"*/}
-              {/*  onClick={() => {*/}
-              {/*    handleSend();*/}
-              {/*  }}*/}
-              {/*  loading={loading}*/}
-              {/*>*/}
-              {/*  上线*/}
-              {/*</Button>*/}
-              {/*<Button*/}
-              {/*  type="primary"*/}
-              {/*  onClick={() => {*/}
-              {/*    form*/}
-              {/*      .validateFields()*/}
-              {/*      .then(data => {*/}
-              {/*        const cur = { ...data };*/}
-              {/*        richFormColumns.map(item => {*/}
-              {/*          cur[item.name as string] =*/}
-              {/*            data[item.name as string] &&*/}
-              {/*            typeof data[item.name as string] === "object"*/}
-              {/*              ? data[item.name as string].toHTML()*/}
-              {/*              : data[item.name as string];*/}
-              {/*        });*/}
-              {/*        setVulData((prev: any) => ({ ...prev, ...cur }));*/}
-              {/*        handleStepChange(2);*/}
-              {/*      })*/}
-              {/*      .catch(err => {});*/}
-              {/*  }}*/}
-              {/*>*/}
-              {/*  请求配置*/}
-              {/*</Button>*/}
             </React.Fragment>
           )}
-          {/*{step === 2 && (*/}
-          {/*  <React.Fragment>*/}
-          {/*    <Button*/}
-          {/*      type="primary"*/}
-          {/*      onClick={() => {*/}
-          {/*        handleFinish();*/}
-          {/*      }}*/}
-          {/*      loading={loading}*/}
-          {/*    >*/}
-          {/*      保存*/}
-          {/*    </Button>*/}
-          {/*    <Button*/}
-          {/*      type="primary"*/}
-          {/*      onClick={() => {*/}
-          {/*        handleSend();*/}
-          {/*      }}*/}
-          {/*      loading={loading}*/}
-          {/*    >*/}
-          {/*      上线*/}
-          {/*    </Button>*/}
-          {/*    <Button type="primary" onClick={() => handleStepChange(1)}>*/}
-          {/*      漏洞描述*/}
-          {/*    </Button>*/}
-          {/*  </React.Fragment>*/}
-          {/*)}*/}
+
           <Button onClick={props.onCancel}>取消</Button>
         </div>
       }
@@ -449,7 +317,7 @@ const VulModal: React.FC<AddVulProps> = props => {
           )}
           <Row style={{ width: "100%", marginBottom: 24 }}>
             <Col offset={3}>
-              <Alert message="注意：复制粘贴来的文本，需要清除格式" />
+              <Alert message="注意以下为富文本：复制粘贴来的文本先清除格式" />
             </Col>
           </Row>
           {richFormColumns.map(({ name, label, ...formProps }, index) => (
@@ -493,5 +361,6 @@ const VulModal: React.FC<AddVulProps> = props => {
     </Modal>
   );
 };
+
 
 export default VulModal;

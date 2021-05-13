@@ -7,8 +7,6 @@ export const vulDefaultVale: VulStateProps = {
   search_query: {},
   page: 1,
   pagesize: 20,
-  moduleList: [],
-  scriptList: [],
   productList: []
 };
 

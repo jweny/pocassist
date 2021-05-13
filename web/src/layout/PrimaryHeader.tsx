@@ -9,7 +9,7 @@ import {
   message,
   Modal
 } from "antd";
-import avatar from "@/assets/images/TX.png";
+import avatar from "@/assets/images/avatar.png";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { useHistory } from "react-router-dom";
 import GlobalContext from "../store/global/store";
@@ -47,12 +47,6 @@ const PrimaryHeader: React.FC = props => {
 
   const menu = (
     <Menu>
-      {/* <Menu.ItemGroup title="用户设置">
-        <Menu.Divider />
-        <Menu.Item>个人设置</Menu.Item>
-        <Menu.Item>系统设置</Menu.Item>
-      </Menu.ItemGroup>
-      <Menu.Divider /> */}
       <Menu.Item onClick={() => setShow(true)}>修改密码</Menu.Item>
       <Menu.Item onClick={handleLogout}>退出登录</Menu.Item>
     </Menu>
@@ -73,7 +67,7 @@ const PrimaryHeader: React.FC = props => {
         >
           <div className="ant-dropdown-link">
             <div>
-              {getUserInfo().name}，你好
+              欢迎，{getUserInfo().name}
               {/*<DownOutlined*/}
               {/*  style={{ fontSize: 12, marginLeft: 10, lineHeight: "20px" }}*/}
               {/*/>*/}

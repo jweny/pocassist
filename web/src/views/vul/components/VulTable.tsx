@@ -127,7 +127,7 @@ const VulTable: React.FC<VulComponentProps> = props => {
             type="primary"
             onClick={handleToggleAdd}
           >
-            新建
+            新建描述
           </Button>
         </Space>
         <CustomColumns
@@ -156,7 +156,7 @@ const VulTable: React.FC<VulComponentProps> = props => {
         <VulModal
           visible={addShow}
           onCancel={handleToggleAdd}
-          title={!!selected ? "漏洞详情" : "新增漏洞"}
+          title={!!selected ? "漏洞描述详情" : "新建漏洞描述"}
           width={width}
           wrapClassName="add-vul-wrap"
           selected={selected}

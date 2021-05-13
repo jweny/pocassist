@@ -4,9 +4,8 @@ import VulSearchFrom from "./components/SearchForm";
 import VulTable from "./components/VulTable";
 import RuleContext, { ruleDefaultVale } from "../../store/rule/store";
 import { RouteComponentProps } from "react-router-dom";
-import vulReducer from "../../store/vul/reducer";
 import { getVulBasic, getVulList } from "../../api/vul";
-import { getProductList, ProductDataProps } from "../../api/product";
+import { getProductList, ProductDataProps } from "../../api/webapp";
 import ruleReducer from "../../store/rule/reducer";
 
 const VulRules: React.FC<RouteComponentProps> = props => {

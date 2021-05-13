@@ -1,17 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Button, message, Popconfirm, Space, Table } from "antd";
-import { ImportOutlined, PlusOutlined } from "@ant-design/icons/lib";
+import { PlusOutlined } from "@ant-design/icons/lib";
 import { ColumnProps } from "antd/es/table";
 import RuleContext from "../../../store/rule/store";
 import CustomColumns from "../../../components/CustomColumns";
 import { getAllColumns } from "./columns";
 import VulModal from "./VulModal";
-import {
-  deleteVul,
-  getVulDetail,
-  getVulList,
-  VulDataProps
-} from "../../../api/vul";
 import { VulComponentProps } from "./SearchForm";
 import {
   deleteRule,
@@ -56,11 +50,11 @@ const VulTable: React.FC<VulComponentProps> = props => {
   }, [state.page, state.pagesize, state.search_query]);
 
   const realColumns: ColumnProps<RuleDataProps>[] = [
-    // {
-    //   title: "序号",
-    //   dataIndex: "order",
-    //   render: (value, record, index) => index + 1
-    // },
+    {
+      title: "序号",
+      dataIndex: "order",
+      render: (value, record, index) => index + 1
+    },
     ...columns,
     {
       title: "操作",
@@ -85,7 +79,7 @@ const VulTable: React.FC<VulComponentProps> = props => {
               详情
             </Button>
             <Popconfirm
-              title="确定删除该条漏洞吗？"
+              title="真的删除？"
               onCancel={() => {}}
               onConfirm={() => {
                 handleDeleteVul(record.id as number);
@@ -135,7 +129,7 @@ const VulTable: React.FC<VulComponentProps> = props => {
             type="primary"
             onClick={handleToggleAdd}
           >
-            新建
+            新建poc
           </Button>
         </Space>
         <CustomColumns
@@ -164,7 +158,7 @@ const VulTable: React.FC<VulComponentProps> = props => {
         <VulModal
           visible={addShow}
           onCancel={handleToggleAdd}
-          title={!!selected ? "漏洞规则" : "新增漏洞规则"}
+          title={!!selected ? "poc详情" : "新增poc"}
           width={width}
           wrapClassName="add-vul-wrap"
           selected={selected}

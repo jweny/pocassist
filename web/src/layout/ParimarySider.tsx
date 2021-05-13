@@ -1,7 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Menu, Layout } from "antd";
-import logo from "@/assets/images/360_logo.png";
-import logo_min from "@/assets/images/360_logo_min.png";
 import { routes } from "../router";
 import { Link, useHistory } from "react-router-dom";
 import CSIcon from "../components/CSIcon";
@@ -62,9 +60,9 @@ const PrimarySider: React.FC = props => {
   }, []);
   return (
     <Sider trigger={null} collapsible collapsed={state.collapsed} width={210}>
-      <div className="logo">
-        <img src={state.collapsed ? logo_min : logo} alt="360" />
-      </div>
+        <h2 className="logo">
+            POC ASSIST
+        </h2>
       <Menu theme="dark" mode="inline" selectedKeys={selected}>
         {submenus}
       </Menu>

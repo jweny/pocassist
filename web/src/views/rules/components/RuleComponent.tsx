@@ -68,7 +68,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
   return (
     <div>
       <Row className="run-test-items">
-        <Col span={4}>请求方法：</Col>
+        <Col span={4}>请求方法 method：</Col>
         <Col span={14} offset={1}>
           <Select
             value={data?.method}
@@ -91,7 +91,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>请求路径：</Col>
+        <Col span={4}>请求路径 path：</Col>
         <Col span={14} offset={1}>
           <Input
             value={data?.path}
@@ -103,7 +103,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>自定义头：</Col>
+        <Col span={4}>请求头 headers：</Col>
         <Col span={14} offset={1}>
           {headerList.map(item => {
             return (
@@ -128,13 +128,13 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
             保存请求头
           </Button>
           <span style={{ color: "red", marginLeft: "10px" }}>
-            填写完自定义头后请点击该按钮保存
+            注意：填写完请求头后请点击该按钮，否则不会保存请求头！
           </span>
         </Col>
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>请求体：</Col>
+        <Col span={4}>请求体 body：</Col>
         <Col span={14} offset={1}>
           <Input.TextArea
             value={data?.body}
@@ -146,7 +146,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>允许跳转：</Col>
+        <Col span={4}>允许跳转 follow_redirects：</Col>
         <Col span={14} offset={1}>
           <Switch
             checked={data?.follow_redirects}
@@ -158,7 +158,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>提取规则：</Col>
+        <Col span={4}>提取规则 search：</Col>
         <Col span={14} offset={1}>
           <Input.TextArea
             value={data?.search}
@@ -170,7 +170,7 @@ const RuleComponent: React.FC<RuleComponentProps> = props => {
       </Row>
 
       <Row className="run-test-items">
-        <Col span={4}>表达式：</Col>
+        <Col span={4}>表达式 expression：</Col>
         <Col span={14} offset={1}>
           <Input.TextArea
             value={data?.expression}

@@ -2,9 +2,6 @@ import React, { useContext, useReducer } from "react";
 import { Button, Form, Input, Select } from "antd";
 import { FormItemProps } from "antd/es/form";
 import VulContext from "../../../store/vul/store";
-import { ModuleDataProps } from "../../../api/module";
-import { ProductDataProps } from "../../../api/product";
-import { ScriptDataProps } from "../../../api/script";
 
 export type FormColumnProps = Omit<FormItemProps, "children"> & {
   render?: () => React.ReactNode;
@@ -18,23 +15,6 @@ const VulSearchFrom: React.FC<VulComponentProps> = props => {
   // const { moduleList, productList } = props;
 
   const formColumns: FormColumnProps[] = [
-    {
-      name: "levelField",
-      label: "漏洞等级",
-      render: () => {
-        return (
-          <Select placeholder="请选择" style={{ width: 120 }} allowClear>
-            {state.basic?.VulLevel.map(item => {
-              return (
-                <Select.Option value={item.name} key={item.name}>
-                  {item.label}
-                </Select.Option>
-              );
-            })}
-          </Select>
-        );
-      }
-    },
     {
       name: "typeField",
       label: "漏洞类型",
@@ -62,40 +42,6 @@ const VulSearchFrom: React.FC<VulComponentProps> = props => {
               return (
                 <Select.Option value={item.id as number} key={item.id}>
                   {item.name}
-                </Select.Option>
-              );
-            })}
-          </Select>
-        );
-      }
-    },
-    {
-      name: "scanField",
-      label: "扫描类型",
-      render: () => {
-        return (
-          <Select placeholder="请选择" style={{ width: 200 }} allowClear>
-            {state.basic?.VulScanType.map(item => {
-              return (
-                <Select.Option value={item.name} key={item.name}>
-                  {item.label}
-                </Select.Option>
-              );
-            })}
-          </Select>
-        );
-      }
-    },
-    {
-      name: "languageField",
-      label: "语言类型",
-      render: () => {
-        return (
-          <Select placeholder="请选择" style={{ width: 120 }} allowClear>
-            {state.basic?.VulLanguage.map(item => {
-              return (
-                <Select.Option value={item.name} key={item.name}>
-                  {item.label}
                 </Select.Option>
               );
             })}

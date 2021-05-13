@@ -8,21 +8,15 @@ import {
   Button,
   Col,
   Input,
-  message,
-  Modal,
   Radio,
   Row,
-  Spin,
   Table,
-  Tabs
 } from "antd";
 import { ColumnProps } from "antd/es/table";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons/lib";
 import TestComponent, {
-  CriterionProps,
   TestComponentProps
 } from "./TestComponent";
-import { sendVul, testVul } from "../../../api/vul";
 
 interface RunTestProps {
   testData: any; //默认值
@@ -84,40 +78,6 @@ const RunTest: React.FC<RunTestProps> = (props, ref) => {
       setGroupData([{ name: "rules", data: [{ id: getId() }], id: getId() }]);
     }
   }, [testData]);
-
-  function getCriteriaChildren(data: CriterionProps | undefined) {
-    if (data?.criteria) {
-      const tempCriteria = Array.isArray(data.criteria)
-        ? data.criteria
-        : [data.criteria];
-
-      return tempCriteria.map(value => {
-        // console.log(value);
-        const tempChildren: CriterionProps = {
-          id: getId(),
-          ...value,
-          key: "criteria",
-          children: getCriteriaChildren(value)
-        };
-        return tempChildren;
-      });
-    }
-    return Array.isArray(data?.criterion)
-      ? data?.criterion?.map(item => ({
-          key: "criterion",
-          id: getId(),
-          ...item
-        }))
-      : data?.criterion
-      ? [
-          {
-            key: "criterion",
-            id: getId(),
-            ...(data.criterion as CriterionProps)
-          }
-        ]
-      : [];
-  }
   /**
    * 将数据格式化成表格所需格式
    * rules和groups分别处理
@@ -165,18 +125,6 @@ const RunTest: React.FC<RunTestProps> = (props, ref) => {
       return item.id !== id;
     });
     setGroupData(curData);
-  };
-
-  const handleRunTest = () => {
-    setShow(true);
-    setLoading(true);
-    testVul(vulId, { target: formData.type })
-      .then(res => {
-        setTestResult(res.data);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   };
 
   const columns: ColumnProps<ItemDataProps>[] = [
@@ -307,16 +255,6 @@ const RunTest: React.FC<RunTestProps> = (props, ref) => {
           规则类型：
         </Col>
         <Col span={14}>
-          {/*<Input*/}
-          {/*  value={formData?.name}*/}
-          {/*  onChange={e => {*/}
-          {/*    e.persist();*/}
-          {/*    setFormData(prevState => ({*/}
-          {/*      ...prevState,*/}
-          {/*      name: e.target.value*/}
-          {/*    }));*/}
-          {/*  }}*/}
-          {/*/>*/}
           <Radio.Group
             onChange={e => {
               setFormData(prevState => ({
@@ -332,7 +270,7 @@ const RunTest: React.FC<RunTestProps> = (props, ref) => {
         </Col>
       </Row>
       <Button type="link" onClick={handleAddItem}>
-        添加自定义变量 <PlusOutlined />
+        添加变量 <PlusOutlined />
       </Button>
       {formData.type === "groups" && (
         <Button type="link" onClick={handleAddTest}>
@@ -357,18 +295,6 @@ const RunTest: React.FC<RunTestProps> = (props, ref) => {
           )
         );
       })}
-      {/*{data.map((item, index) => {*/}
-      {/*  return (*/}
-      {/*    item && (*/}
-      {/*      <TestComponent*/}
-      {/*        data={item}*/}
-      {/*        setData={handleTestFinish}*/}
-      {/*        delete={handleDeleteTest}*/}
-      {/*        key={index}*/}
-      {/*      />*/}
-      {/*    )*/}
-      {/*  );*/}
-      {/*})}*/}
     </div>
   );
 };

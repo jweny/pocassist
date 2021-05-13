@@ -8,8 +8,6 @@ export const ruleDefaultVale: RuleStateProps = {
   page: 1,
   pagesize: 20,
   flag: false,
-  moduleList: [],
-  scriptList: [],
   productList: []
 };
 

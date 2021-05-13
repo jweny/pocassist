@@ -1,9 +1,7 @@
 import { Reducer } from "react";
 import { ActionProps } from "../global/reducer";
 import { VulDataProps } from "../../api/vul";
-import { ModuleDataProps } from "../../api/module";
-import { ProductDataProps } from "../../api/product";
-import { ScriptDataProps } from "../../api/script";
+import { ProductDataProps } from "../../api/webapp";
 
 interface BasicProps {
   name: string;
@@ -28,8 +26,6 @@ export interface VulStateProps {
   };
   list?: VulDataProps[];
   total?: number;
-  moduleList?: ModuleDataProps[];
-  scriptList?: ScriptDataProps[];
   productList?: ProductDataProps[];
 }
 

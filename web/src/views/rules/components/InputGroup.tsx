@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Input } from "antd";
 import { MinusCircleOutlined, PlusCircleOutlined } from "@ant-design/icons/lib";
 import { InputProps } from "antd/es/input";

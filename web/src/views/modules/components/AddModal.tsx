@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Button, Form, Input, Modal, Select } from "antd";
+import React, { useEffect } from "react";
+import { Button, Form, Input, Modal } from "antd";
 import { ModalProps } from "antd/es/modal";
-import { FormColumnProps } from "../../vul/components/SearchForm";
-import { moduleFormColumns, productFormColumns } from "./columns";
+import { productFormColumns } from "./columns";
 
 interface AddModuleProps extends ModalProps {
   scriptType?: { name: string; label: string }[];
@@ -10,7 +9,7 @@ interface AddModuleProps extends ModalProps {
   selected?: any;
 }
 const AddModal: React.FC<AddModuleProps> = props => {
-  const { scriptType, type, selected } = props;
+  const { type, selected } = props;
   const [form] = Form.useForm();
   const formItemLayout = {
     labelCol: { span: 6 },
@@ -21,52 +20,13 @@ const AddModal: React.FC<AddModuleProps> = props => {
     form.resetFields();
   }, [selected, form]);
 
-  const scriptFormColumns: FormColumnProps[] = [
-    {
-      name: "name",
-      label: "组件名称",
-      rules: [{ required: true }]
-    },
-    {
-      name: "type_id",
-      label: "脚本类型",
-      render: () => {
-        return (
-          <Select placeholder="请选择" style={{ width: 120 }}>
-            {scriptType?.map(item => {
-              return (
-                <Select.Option key={item.name} value={item.name}>
-                  {item.label}
-                </Select.Option>
-              );
-            })}
-          </Select>
-        );
-      },
-      rules: [{ required: true }]
-    },
-    {
-      name: "remarks",
-      label: "备注",
-      render: () => {
-        return <Input.TextArea />;
-      }
-    }
-  ];
-
   let columns;
   switch (type) {
-    case "module":
-      columns = moduleFormColumns;
-      break;
     case "product":
       columns = productFormColumns;
       break;
-    case "script":
-      columns = scriptFormColumns;
-      break;
     default:
-      columns = moduleFormColumns;
+      columns = productFormColumns;
   }
 
   const handleFinish = (value: any) => {

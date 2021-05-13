@@ -1,10 +1,7 @@
-import React, { useContext, useReducer } from "react";
+import React, { useContext } from "react";
 import { Button, Form, Input, Select } from "antd";
 import { FormItemProps } from "antd/es/form";
 import RuleContext from "../../../store/rule/store";
-import { ModuleDataProps } from "../../../api/module";
-import { ProductDataProps } from "../../../api/product";
-import { ScriptDataProps } from "../../../api/script";
 
 export type FormColumnProps = Omit<FormItemProps, "children"> & {
   render?: () => React.ReactNode;
@@ -15,34 +12,16 @@ export interface VulComponentProps {}
 const VulSearchFrom: React.FC<VulComponentProps> = props => {
   const [form] = Form.useForm();
   const { state, dispatch } = useContext(RuleContext);
-  // const { moduleList, productList } = props;
 
   const formColumns: FormColumnProps[] = [
-    // {
-    //   name: "moduleField",
-    //   label: "模块",
-    //   render: () => {
-    //     return (
-    //       <Select placeholder="请选择" style={{ width: 200 }} allowClear>
-    //         {state.moduleList?.map(item => {
-    //           return (
-    //             <Select.Option value={item.id as number} key={item.id}>
-    //               {item.name}
-    //             </Select.Option>
-    //           );
-    //         })}
-    //       </Select>
-    //     );
-    //   }
-    // },
     {
       name: "enableField",
       label: "是否启用",
       render: () => {
         return (
-          <Select placeholder="请选择" style={{ width: 120 }} allowClear>
-            <Select.Option value="True">是</Select.Option>
-            <Select.Option value="False">否</Select.Option>
+          <Select placeholder="状态" style={{ width: 120 }} allowClear>
+            <Select.Option value="True">启用</Select.Option>
+            <Select.Option value="False">禁用</Select.Option>
           </Select>
         );
       }
@@ -64,19 +43,6 @@ const VulSearchFrom: React.FC<VulComponentProps> = props => {
         );
       }
     },
-    // {
-    //   name: "hasDesField",
-    //   label: "关联",
-    //   render: () => {
-    //     return (
-    //       <Select placeholder="请选择" style={{ width: 120 }} allowClear>
-    //         <Select.Option value={1}>已关联</Select.Option>
-    //         <Select.Option value={0}>未关联</Select.Option>
-    //       </Select>
-    //     );
-    //   },
-    //   initialValue: 1
-    // },
     {
       name: "search",
       label: "模糊查询"

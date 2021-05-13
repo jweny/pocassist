@@ -1,5 +1,18 @@
 import request from "../utils/request";
 
+export interface RuleRunReqMsg {
+  header: string,
+  body: string,
+}
+
+export interface RuleRunResult {
+  vulnerable: boolean,
+  target: string,
+  output: string,
+  req_msg: RuleRunReqMsg,
+  resp_msg: RuleRunReqMsg,
+}
+
 export interface RuleDataProps {
   id: number;
   json_poc: JsonPoc;
@@ -77,9 +90,9 @@ export const updateRule = (data: RuleDataProps, id?: number) => {
 };
 /**
  * 删除规则
- * @param data
+ * @param id
  */
-export const deleteRule = (id: number) => {
+export const deleteRule = (id?: number) => {
   return request({
     url: `/v1/poc/${id}`,
     method: "delete"
@@ -87,11 +100,10 @@ export const deleteRule = (id: number) => {
 };
 /**
  * 测试规则
- * @param id
  */
-export const testRule = (id?: number, data?: any) => {
+export const testRule = (data?: any) => {
   return request({
-    url: `/v1/poc/${id}/test/`,
+    url: `/v1/poc/run/`,
     method: "post",
     data
   });

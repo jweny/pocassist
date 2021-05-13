@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useReducer } from "react";
 import { useLocation } from "react-router-dom";
 import PrimaryHeader from "./PrimaryHeader";
 import "./layout.less";

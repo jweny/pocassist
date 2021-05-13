@@ -16,9 +16,6 @@ const UnAuthLayout: React.FC<{}> = props => {
     <ReactRoute>
       <Layout className="un-auth-layout">
         <BasicLayout />
-        {/*<div className="footer">*/}
-        {/*  <p>Copyright 2005-2020 360.com 版权所有 360互联网中心</p>*/}
-        {/*</div>*/}
       </Layout>
     </ReactRoute>
   );

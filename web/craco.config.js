@@ -19,8 +19,7 @@ module.exports = {
     proxy: {
       // 配置跨域
       "/v1": {
-        // target: 'http://p44703v.hulk.shbt.qihoo.net:3000/api', // 这里后台的地址
-        target: "http://vulmanage.qihoo.net:1111/api",
+        target: "http://127.0.0.1:1231/api",
         ws: false,
         changOrigin: true, // 允许跨域
         pathRewrite: {

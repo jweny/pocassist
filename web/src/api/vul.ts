@@ -71,17 +71,6 @@ export const createVul = (data: VulDataProps) => {
 };
 
 /**
- * 创建XML
- * @param data
- */
-export const createXml = (data: any) => {
-  return request({
-    url: "/v1/xml/",
-    method: "post",
-    data
-  });
-};
-/**
  * 删除漏洞
  * @param data
  */
@@ -89,17 +78,6 @@ export const deleteVul = (id: number) => {
   return request({
     url: `/v1/vul/${id}/`,
     method: "delete"
-  });
-};
-
-/**
- * 获取漏洞对应的XML列表
- * @param data
- */
-export const getVulXml = (id: number) => {
-  return request({
-    url: `/v1/xml/vul/${id}`,
-    method: "get"
   });
 };
 
@@ -124,67 +102,5 @@ export const updateVul = (data: VulDataProps, id?: number) => {
     url: `/v1/vul/${id}/`,
     method: "put",
     data
-  });
-};
-/**
- * 编辑XML
- * @param data
- * @param id
- */
-export const updateXml = (data: any, id?: number) => {
-  return request({
-    url: `/v1/xml/${id}`,
-    method: "put",
-    data
-  });
-};
-
-/**
- * 测试漏洞
- * @param id
- */
-export const testVul = (id?: number, data?: { target: string }) => {
-  return request({
-    url: `/v1/vul/${id}/test/`,
-    method: "post",
-    data
-  });
-};
-
-/**
- * 发送
- * @param id
- */
-export const sendVul = (id?: number) => {
-  return request({
-    url: `/v1/vul/${id}/send/`,
-    method: "get"
-  });
-};
-
-/**
- * 获取XML列表
- * @param params
- */
-export const getXmlList = (params: {
-  page: number;
-  pagesize: number;
-  search_query?: string;
-}) => {
-  return request({
-    url: "/v1/xml/",
-    method: "get",
-    params
-  });
-};
-
-/**
- * 删除XML
- * @param data
- */
-export const deleteXml = (id: number) => {
-  return request({
-    url: `/v1/xml/${id}`,
-    method: "delete"
   });
 };
