@@ -89,17 +89,17 @@ poc测试（漏洞检测）：
 
 部署过程非常简单，从release中下载相应系统版本的zip文件，其中包括：
 
-- poacssist二进制文件
+- pocassist二进制文件
 - 打包好的前端 `build`文件夹
 - config.yaml
 
 #### api
 
-1. 创建poacssist数据库，并将pocassist.sql导入。
+1. 创建pocassist数据库，并将pocassist.sql导入。
 2. 编辑config.yaml，配置数据库以及其他个性化配置
 3. 运行服务端
-   - 如果使用默认端口（默认端口：1231）：`./poacssist server`
-   - 如果使用其他端口，如8888：`./poacssist server --port 8888`
+   - 如果使用默认端口（默认端口：1231）：`./pocassist server`
+   - 如果使用其他端口，如8888：`./pocassist server --port 8888`
 
 #### 前端
 
