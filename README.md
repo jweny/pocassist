@@ -1,6 +1,10 @@
-<div align="center">
-	<img src="pic.assets/logo.png" alt="Editor" width="200">
-</div>
+<p align="center">
+   <img alt="pocassist" src="pic.assets/logo.png" width="200"/>
+   <h3 align="center">POCASSIST</h3>
+   <p align="center">全新的开源漏洞测试框架，支持poc的在线编辑、管理、测试</p>
+</p>
+
+
 
 pocassist是一款全新的开源漏洞测试框架，无需代码知识也可实现对poc的在线编辑、管理、测试。
 
@@ -45,45 +49,92 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 
 
+![架构图](pic.assets/架构图.jpg)
+
+### web
+
 ![登录页](pic.assets/登录页.jpg)
 
 
 
-### web端
-
-#### 漏洞管理
-
-漏洞表：
-
 ![漏洞描述](pic.assets/漏洞描述.jpg)
 
-漏洞详细信息编辑：
+
 
 ![漏洞描述详情](pic.assets/漏洞描述详情.jpg)
 
-#### poc编辑测试
 
-poc表：
 
 ![poc](pic.assets/poc.jpg)
 
-poc编辑页：
+poc在线编辑：
 
 ![poc编辑](pic.assets/poc编辑.jpg)
 
-在`测试url`中输入url，点击`测试规则按钮`，将 根据`规则类型`和`poc中定义的规则`进行漏洞检测。
+poc测试（漏洞检测）：
 
 ![poc运行结果](pic.assets/poc运行结果.jpg)
 
-### 命令行
+### cli
 
 通过命令行对目标url进行验证：
 
 ![命令行执行](pic.assets/命令行执行.jpg)
 
-## 安装
 
-暂时可下载源码编译安装，下一版将提供编译好的二进制 && 打包好的前端 && Docker镜像。
+
+## 快速开始
+
+### 部署
+
+部署过程非常简单，从release中下载相应系统版本的zip文件，其中包括：
+
+- poacssist二进制文件
+- 打包好的前端 `build`文件夹
+- config.yaml
+
+#### api
+
+1. 创建poacssist数据库，并将pocassist.sql导入。
+2. 编辑config.yaml，配置数据库以及其他个性化配置
+3. 运行服务端
+   - 如果使用默认端口（默认端口：1231）：`./poacssist server`
+   - 如果使用其他端口，如8888：`./poacssist server --port 8888`
+
+#### 前端
+
+1. 准备release中的`build`。
+2. 安装nginx。修改nginx.conf反向代理后端。
+
+```
+upstream pocassistAPI {
+				# 配置后端端口
+        server 127.0.0.1:1231;
+    }
+server {
+        listen       80;
+        location / {
+        		# 配置build文件夹路径
+            root /opt/pocassistWEB/build/;
+        }
+
+        location /api/ {
+            proxy_pass http://pocassistAPI/api/;
+        }
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    }
+```
+
+### 开发
+
+#### api
 
 ```
 git clone https://github.com/jweny/pocassist.git
@@ -92,32 +143,33 @@ cd pocassist
 
 go build -o pocassist
 
-# 创建数据，导入数据，修改config.yaml
+# 创建数据库，导入数据，修改config.yaml
 
 ./pocassist
 ```
 
-## 使用
+#### 前端
 
-![help-1](pic.assets/help-1.jpg)
+develope模式下前端默认运行在3333端口 
 
-### web端
+后端在craco.config.js中配置，默认为`127.0.0.1:1231`
 
 ```
-# 启动web后端 默认1231端口
-
-./pocassist server 
-
-# 启动web前端 默认3333端口 如果后端使用自定义端口可编辑 craco.config.js
-
+# 启动前端
 cd pocassist/web
 
 yarn start
 ```
 
-==========详细的web端使用手册正在疯狂编写中...==============
 
-### 命令行
+
+## 使用
+
+### web
+
+==========详细的web端使用手册正在疯狂编写中==============
+
+### cli
 
 ```
 ./pocassist cli -h
@@ -125,8 +177,12 @@ yarn start
 
 ![help-2](pic.assets/help-2.jpg)
 
+#### 参数释义
+
 - url参数为检测单个url
+
 - urlFile参数为从文件批量加载url
+
 - urlRaw参数为从文件中加载请求报文
 
 - loadPoc 参数为加载规则的类型，缩写：
@@ -162,6 +218,29 @@ yarn start
     ./pocassist cli -lp affects  -c directory -u http://xxx.xxx.xxx.xxx
     ```
 
+
+
+## 常问问题
+
+1. 数据库中默认登录的账号密码：admin/admin2
+
+2. 数据库初始化失败 / config.yaml 加载失败：
+
+   一定先创建数据库，导入数据，并将数据库信息更新至config.yaml后，再使用本工具。
+
+   config.yaml要与pocassist二进制文件放置于同一目录中。
+
+3. `go get ./... connection error`
+
+   启用goproxy（请参阅此[文章](https://madneal.com/post/gproxy/)以进行golang升级）：
+
+   ```
+   go env -w GOPROXY=https://goproxy.cn,direct
+   go env -w GO111MODULE=on
+   ```
+
+
+
 ## todo
 
 - 由于实现的细节较多，详细的规则编辑使用手册正在疯狂编写中
@@ -174,7 +253,25 @@ yarn start
 
 - server api 优化
 
+- 收集更多的poc
+
   
+
+## 微信
+
+如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加我的微信进行交流。
+
+<p align="left">
+   <img alt="jweny wechat: bad-lucifer" src="pic.assets/wechat.jpeg" width="150"/>
+</p>
+
+
+
+## License
+
+[Apache License 2.0](https://github.com/madneal/gshark/blob/master/LICENSE)
+
+
 
 ## 参考
 
