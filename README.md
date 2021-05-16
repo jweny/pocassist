@@ -249,11 +249,11 @@ yarn start
 
 - 前端批量执行多个poc
 
-- 发现潜在的bug
-
 - server api 优化
 
 - 收集更多的poc
+
+- 实现一个二进制走天下：数据库支持sqlite，并将前端打包进二进制
 
   
 
