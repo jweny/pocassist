@@ -1,6 +1,5 @@
 # HTTP配置
 httpConfig:
-  # 127.0.0.1:8080
   proxy: ""
   # 读取http响应超时时间
   http_timeout: 10
@@ -18,12 +17,14 @@ httpConfig:
 
 # 数据库配置
 dbConfig:
-  host: "127.0.0.1"
-  password: ""
-  port: ""
-  user: ""
-  database: "pocassist"
-  timeout: "3s"
+  sqlite : "pocassist.db"
+  mysql:
+    host: "127.0.0.1"
+    password: ""
+    port: "3306"
+    user: "root"
+    database: "pocassist"
+    timeout: "3s"
 
 # 插件配置
 pluginsConfig:

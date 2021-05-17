@@ -10,14 +10,19 @@ type Headers struct {
 	UserAgent string `mapstructure:"user_agent"`
 }
 
-// DbConfig
-type DbConfig struct {
+type Mysql struct {
 	Host     string `mapstructure:"host"`
 	Password string `mapstructure:"password"`
 	Port     string `mapstructure:"port"`
 	User     string `mapstructure:"user"`
 	Database string `mapstructure:"database"`
 	Timeout  string `mapstructure:"timeout"`
+}
+
+// DbConfig
+type DbConfig struct {
+	Sqlite string `mapstructure:"sqlite"`
+	Mysql Mysql `mapstructure:"mysql"`
 }
 
 // PluginsConfig

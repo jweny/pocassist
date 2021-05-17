@@ -2,8 +2,11 @@ package api
 
 import (
 	"github.com/astaxie/beego/validation"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"pocassist/ui"
+	"strings"
 )
 
 const (
@@ -13,7 +16,7 @@ const (
 
 func init() {
 	// release 如果需要debug 此处改为 gin.DebugMode
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 }
 
 // API Response 基础序列化器
@@ -43,7 +46,7 @@ func SuccessResp(data interface{}) (int,Response) {
 	return http.StatusOK, res
 }
 
-func DealValidError(valid validation.Validation) (string) {
+func DealValidError(valid validation.Validation) string {
 	errStr := "参数校验不通过:"
 	for _, err := range valid.Errors {
 		errStr += err.Message + ";"
@@ -51,12 +54,61 @@ func DealValidError(valid validation.Validation) (string) {
 	return errStr
 }
 
+
+type binaryFileSystem struct {
+	fs http.FileSystem
+}
+
+func (b *binaryFileSystem) Open(name string) (http.File, error) {
+	return b.fs.Open(name)
+}
+
+func (b *binaryFileSystem) Exists(prefix, filepath string) bool {
+	if p := strings.TrimPrefix(filepath, prefix); len(p) > len(filepath) {
+		if _, err := b.fs.Open(p); err != nil {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+// BinaryFileSystem ...
+func BinaryFileSystem(root string) *binaryFileSystem {
+	return &binaryFileSystem{
+		fs: &assetfs.AssetFS{
+			Asset:     ui.Asset,
+			AssetDir:  ui.AssetDir,
+			AssetInfo: ui.AssetInfo,
+			Prefix:    root,
+		},
+	}
+}
+
+
 func Route(port string) {
 	router := gin.Default()
-	// 无需身份校验的接口
+	// web
+	//router.Use(static.Serve("/static", BinaryFileSystem("ui/build")))
+	//router.StaticFS("/css", BinaryFileSystem("ui/build/static"))
+	//router.StaticFS("/js", BinaryFileSystem("ui/build/static"))
+	//router.StaticFS("/media", BinaryFileSystem("ui/build/static"))
+	//
+	//router.GET("/", func(c *gin.Context) {
+	//	c.Writer.WriteHeader(200)
+	//	indexHtml, _ := ui.Asset("ui/build/index.html")
+	//	_, _ = c.Writer.Write(indexHtml)
+	//	c.Writer.Header().Add("Accept", "text/html")
+	//	c.Writer.Flush()
+	//})
+	router.StaticFS("/ui", BinaryFileSystem("ui/build"))
+
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusPermanentRedirect, "/ui")
+	})
+
+	// api
 	router.POST("/api/v1/user/login", GetAuth)
-
-
 	pluginRoutes := router.Group("/api/v1/poc")
 	pluginRoutes.Use(JWT())
 	{

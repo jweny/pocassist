@@ -53,6 +53,10 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 ### web
 
+前端UI使用 react + antd开发。已单独拆分成一个项目，有兴趣的可以单独看这里：
+
+https://github.com/jweny/pocassistweb
+
 ![登录页](pic.assets/登录页.jpg)
 
 
@@ -87,50 +91,19 @@ poc测试（漏洞检测）：
 
 ### 部署
 
-部署过程非常简单，从release中下载相应系统版本的zip文件，其中包括：
+1. 从release中下载相应系统版本的zip文件，其中包括：
 
-- pocassist二进制文件
-- 打包好的前端 `build`文件夹
-- config.yaml
+- 二进制文件：pocassist
+- 配置文件：config.yaml
+- 数据库文件：sqlite(pocassist.db) + mysql(pocassist.sql)
 
-#### api
-
-1. 创建pocassist数据库，并将pocassist.sql导入。
 2. 编辑config.yaml，配置数据库以及其他个性化配置
-3. 运行服务端
-   - 如果使用默认端口（默认端口：1231）：`./pocassist server`
-   - 如果使用其他端口，如8888：`./pocassist server --port 8888`
 
-#### 前端
+3. 运行
 
-1. 准备release中的`build`。
-2. 安装nginx。修改nginx.conf反向代理后端。
-
-```
-upstream pocassistAPI {
-				# 配置后端端口
-        server 127.0.0.1:1231;
-    }
-server {
-        listen       80;
-        location / {
-        		# 配置build文件夹路径
-            root /opt/pocassistWEB/build/;
-        }
-
-        location /api/ {
-            proxy_pass http://pocassistAPI/api/;
-        }
-
-        error_page 404 /404.html;
-            location = /40x.html {
-        }
-
-        error_page 500 502 503 504 /50x.html;
-            location = /50x.html {
-        }
-    }
-```
+- 如果使用默认端口（默认端口：1231）：`./pocassist server`
+- 如果使用其他端口，如8888：`./pocassist server --port`
+- 默认使用sqlite数据库，如果使用mysql请自行建库导数据。
 
 ### 开发
 
@@ -143,7 +116,7 @@ cd pocassist
 
 go build -o pocassist
 
-# 创建数据库，导入数据，修改config.yaml
+# 创建数据库。修改config.yaml
 
 ./pocassist
 ```
@@ -155,7 +128,6 @@ develope模式下前端默认运行在3333端口
 后端在craco.config.js中配置，默认为`127.0.0.1:1231`
 
 ```
-# 启动前端
 cd pocassist/web
 
 yarn start
@@ -165,9 +137,15 @@ yarn start
 
 ## 使用
 
+![0.2.0help-1](pic.assets/0.2.0help-1.jpg)
+
 ### web
 
-==========详细的web端使用手册正在疯狂编写中==============
+```
+./pocassist server -p 端口
+```
+
+==========详细的web界面使用手册正在疯狂编写中==============
 
 ### cli
 
@@ -239,7 +217,60 @@ yarn start
    go env -w GO111MODULE=on
    ```
 
+4. 如果使用前后端分离部署的师傅依旧可以使用0.1.0版本，部署方式
 
+   从release中下载相应系统版本的zip文件，其中包括：
+
+   - pocassist二进制文件
+
+   - 打包好的前端 `build`文件夹
+
+   - config.yaml
+
+     api
+
+   1. 创建pocassist数据库，并将pocassist.sql导入。
+
+   2. 编辑config.yaml，配置数据库以及其他个性化配置
+
+   3. 运行服务端
+
+      - 如果使用默认端口（默认端口：1231）：`./pocassist server`
+      - 如果使用其他端口，如8888：`./pocassist server --port 8888`
+
+      web
+
+   4. 准备release中的`build`。
+
+   5. 安装nginx。修改nginx.conf反向代理后端。
+
+   ```
+   upstream pocassistAPI {
+   				# 配置后端端口
+           server 127.0.0.1:1231;
+       }
+   server {
+           listen       80;
+           location / {
+           		# 配置build文件夹路径
+               root /opt/pocassistWEB/build/;
+           }
+   
+           location /api/ {
+               proxy_pass http://pocassistAPI/api/;
+           }
+   
+           error_page 404 /404.html;
+               location = /40x.html {
+           }
+   
+           error_page 500 502 503 504 /50x.html;
+               location = /50x.html {
+           }
+       }
+   ```
+
+   ### 
 
 ## todo
 
@@ -253,7 +284,7 @@ yarn start
 
 - 收集更多的poc
 
-- 实现一个二进制走天下：数据库支持sqlite，并将前端打包进二进制
+- ~~实现一个二进制走天下：数据库支持sqlite，并将前端打包进二进制~~ 已经搞定
 
   
 

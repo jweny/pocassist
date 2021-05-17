@@ -13,7 +13,9 @@ var subCommandServer = cli.Command{
 	Category: "server",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			// 后端端口
 			Name:  "port",
+			Aliases: []string{"p"},
 			Value: "1231",
 			Usage: "api server port",
 		},

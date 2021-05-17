@@ -5,10 +5,12 @@ go 1.13
 require (
 	github.com/astaxie/beego v1.12.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fatih/color v1.7.0
+	github.com/elazarl/go-bindata-assetfs v1.0.1
+	github.com/gin-gonic/contrib v0.0.0-20201101042839-6a891bf89f19 // indirect
 	github.com/gin-gonic/gin v1.7.1
 	github.com/golang/protobuf v1.5.0
 	github.com/google/cel-go v0.7.3
+	github.com/jteeuwen/go-bindata v3.0.8-0.20180305030458-6025e8de665b+incompatible // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
@@ -30,5 +32,6 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gorm.io/datatypes v1.0.1
 	gorm.io/driver/mysql v1.0.5
+	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.8
 )

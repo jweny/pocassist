@@ -20,6 +20,7 @@ var (
 	loadPoc		string
 	condition	string
 	debug		bool
+	dbname		string
 )
 
 func InitAll() error {
@@ -44,7 +45,7 @@ func InitAll() error {
 	}
 	basic.GlobalLogger.Debug("[config.yaml init success]")
 	// 建立数据库连接
-	err = database.InitDB()
+	err = database.InitDB(dbname)
 	if err != nil {
 		return err
 	}
@@ -68,13 +69,22 @@ func RunApp() {
 	app.Usage = "New POC Framework Without Writing Code"
 	app.Version = "1.0.0"
 	// 全局flag
-	app.Flags = []cli.Flag{ &cli.BoolFlag{
-		Name: "debug",
-		Aliases: []string{"d"},
-		Destination: &debug,
-		Value: false,
-		Usage: "enable debug log"},
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name: "debug",
+			Aliases: []string{"d"},
+			Destination: &debug,
+			Value: false,
+			Usage: "enable debug log"},
+		&cli.StringFlag{
+			Name: "database",
+			Aliases: []string{"db"},
+			Destination: &dbname,
+			Value: "sqlite",
+			Usage: "kind of database, default: sqlite"},
 	}
+
+
 
 	// 子命令
 	app.Commands = []*cli.Command{
