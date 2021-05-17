@@ -102,7 +102,7 @@ poc测试（漏洞检测）：
 3. 运行
 
 - 如果使用默认端口（默认端口：1231）：`./pocassist server`
-- 如果使用其他端口，如8888：`./pocassist server --port`
+- 如果使用其他端口，如8888：`./pocassist server --port 8888`
 - 默认使用sqlite数据库，如果使用mysql请自行建库导数据。
 
 ### 开发
@@ -290,11 +290,14 @@ yarn start
 
 ## 微信
 
-如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加我的微信进行交流。
+如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，或者对其他安全工具有改造想法的，欢迎添加我的微信一块交流。
 
 <p align="left">
    <img alt="jweny wechat: bad-lucifer" src="pic.assets/wechat.jpeg" width="150"/>
 </p>
+
+
+只聊技术，不扯虚的！
 
 
 

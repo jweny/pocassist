@@ -88,19 +88,7 @@ func BinaryFileSystem(root string) *binaryFileSystem {
 
 func Route(port string) {
 	router := gin.Default()
-	// web
-	//router.Use(static.Serve("/static", BinaryFileSystem("ui/build")))
-	//router.StaticFS("/css", BinaryFileSystem("ui/build/static"))
-	//router.StaticFS("/js", BinaryFileSystem("ui/build/static"))
-	//router.StaticFS("/media", BinaryFileSystem("ui/build/static"))
-	//
-	//router.GET("/", func(c *gin.Context) {
-	//	c.Writer.WriteHeader(200)
-	//	indexHtml, _ := ui.Asset("ui/build/index.html")
-	//	_, _ = c.Writer.Write(indexHtml)
-	//	c.Writer.Header().Add("Accept", "text/html")
-	//	c.Writer.Flush()
-	//})
+
 	router.StaticFS("/ui", BinaryFileSystem("ui/build"))
 
 	router.GET("/", func(c *gin.Context) {
