@@ -1,15 +1,14 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/jweny/pocassist/api/routers"
+	conf2 "github.com/jweny/pocassist/pkg/conf"
+	"github.com/jweny/pocassist/pkg/db"
+	"github.com/jweny/pocassist/pkg/logging"
+	"github.com/jweny/pocassist/pkg/util"
+	"github.com/jweny/pocassist/poc/rule"
 	"github.com/urfave/cli/v2"
 	"os"
-	"path"
-	"path/filepath"
-	"pocassist/basic"
-	"pocassist/database"
-	"pocassist/rule"
-	"pocassist/utils"
 	"sort"
 )
 
@@ -23,44 +22,15 @@ var (
 	dbname		string
 )
 
-func InitAll() error {
-	// 获取当前工作目录
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		fmt.Println("init fail get work dir err:" + err.Error())
-		return err
-	}
-	// 初始化logger
-	logFile := path.Join(dir, "debug.log")
-	err = basic.InitLog(debug, logFile)
-	if err != nil {
-		return err
-	}
-	basic.GlobalLogger.Debug("[globalLogger init success]")
-	// 加载配置文件
-	err = basic.InitConfig(dir)
-	if err != nil {
-		basic.GlobalLogger.Debug("[config.yaml init fail]")
-		return err
-	}
-	basic.GlobalLogger.Debug("[config.yaml init success]")
-	// 建立数据库连接
-	err = database.InitDB(dbname)
-	if err != nil {
-		return err
-	}
-	basic.GlobalLogger.Debug("[database init success]")
-	// fasthttp client 初始化
-	err = utils.InitFastHttpClient(basic.GlobalConfig.HttpConfig.Proxy)
-	if err != nil {
-		basic.GlobalLogger.Error("[fasthttp client init err ]", err)
-		return err
-	}
-	basic.GlobalLogger.Debug("[fasthttp client init success]")
-	// handle初始化
-	rule.InitHandles()
-	basic.GlobalLogger.Debug("[rule handles init success]")
-	return nil
+func InitAll() {
+	// config 必须最先加载
+	conf2.Setup()
+	logging.Setup(debug)
+	db.Setup(dbname)
+	routers.Setup()
+	util.Setup()
+	util.Setup()
+	rule.Setup()
 }
 
 func RunApp() {
@@ -84,8 +54,6 @@ func RunApp() {
 			Usage: "kind of database, default: sqlite"},
 	}
 
-
-
 	// 子命令
 	app.Commands = []*cli.Command{
 		&subCommandCli,
@@ -97,7 +65,7 @@ func RunApp() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		basic.GlobalLogger.Error("[app run err ]", err)
+		logging.GlobalLogger.Error("[app run err ]", err)
 		return
 	}
 }

@@ -1,9 +1,8 @@
 package cmd
 
 import (
+	"github.com/jweny/pocassist/api/routers"
 	"github.com/urfave/cli/v2"
-	"pocassist/api"
-	"pocassist/basic"
 )
 
 var subCommandServer = cli.Command{
@@ -24,13 +23,9 @@ var subCommandServer = cli.Command{
 }
 
 func RunServer(c *cli.Context) error {
-	err := InitAll()
-	if err != nil {
-		basic.GlobalLogger.Error("[init err ]", err)
-		return err
-	}
+	InitAll()
 	port := c.String("port")
-	api.Route(port)
+	routers.InitRouter(port)
 	return nil
 }
 

@@ -1,5 +1,5 @@
 <p align="center">
-   <img alt="pocassist" src="pic.assets/logo.png" width="200"/>
+   <img alt="pocassist" src="docs/pic.assets/logo.png" width="200"/>
    <h3 align="center">POCASSIST</h3>
    <p align="center">全新的开源漏洞测试框架，支持poc的在线编辑、管理、测试</p>
 </p>
@@ -49,7 +49,7 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 
 
-![架构图](pic.assets/架构图.jpg)
+![架构图](docs/pic.assets/架构图.jpg)
 
 ### web
 
@@ -57,33 +57,33 @@ pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，
 
 https://github.com/jweny/pocassistweb
 
-![登录页](pic.assets/登录页.jpg)
+![登录页](docs/pic.assets/登录页.jpg)
 
 
 
-![漏洞描述](pic.assets/漏洞描述.jpg)
+![漏洞描述](docs/pic.assets/漏洞描述.jpg)
 
 
 
-![漏洞描述详情](pic.assets/漏洞描述详情.jpg)
+![漏洞描述详情](docs/pic.assets/漏洞描述详情.jpg)
 
 
 
-![poc](pic.assets/poc.jpg)
+![poc](docs/pic.assets/poc.jpg)
 
 poc在线编辑：
 
-![poc编辑](pic.assets/poc编辑.jpg)
+![poc编辑](docs/pic.assets/poc编辑.jpg)
 
 poc测试（漏洞检测）：
 
-![poc运行结果](pic.assets/poc运行结果.jpg)
+![poc运行结果](docs/pic.assets/poc运行结果.jpg)
 
 ### cli
 
 通过命令行对目标url进行验证：
 
-![命令行执行](pic.assets/命令行执行.jpg)
+![命令行执行](docs/pic.assets/命令行执行.jpg)
 
 
 
@@ -137,7 +137,7 @@ yarn start
 
 ## 使用
 
-![0.2.0help-1](pic.assets/0.2.0help-1.jpg)
+![0.2.0help-1](docs/pic.assets/0.2.0help-1.jpg)
 
 ### web
 
@@ -153,7 +153,7 @@ yarn start
 ./pocassist cli -h
 ```
 
-![help-2](pic.assets/help-2.jpg)
+![help-2](docs/pic.assets/help-2.jpg)
 
 #### 参数释义
 
@@ -293,7 +293,7 @@ yarn start
 如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，或者对其他安全工具有改造想法的，欢迎添加我的微信一块交流。
 
 <p align="left">
-   <img alt="jweny wechat: bad-lucifer" src="pic.assets/wechat.jpeg" width="150"/>
+   <img alt="jweny wechat: bad-lucifer" src="docs/pic.assets/wechat.jpeg" width="150"/>
 </p>
 
 

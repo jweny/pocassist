@@ -4,13 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/jweny/pocassist/pkg/conf"
+	"github.com/jweny/pocassist/pkg/file"
+	"github.com/jweny/pocassist/pkg/logging"
+	"github.com/jweny/pocassist/pkg/util"
+	"github.com/jweny/pocassist/poc/rule"
 	"github.com/panjf2000/ants/v2"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
 	"net/http"
-	"pocassist/basic"
-	"pocassist/rule"
-	"pocassist/utils"
 	"sync"
 )
 
@@ -67,21 +69,18 @@ var subCommandCli = cli.Command {
 }
 
 func RunCli(c *cli.Context) error{
-	err := InitAll()
-	if err != nil {
-		basic.GlobalLogger.Error("[init err ]", err)
-	}
+	InitAll()
 	// 加载poc
 	vuls, err := rule.LoadPlugins(loadPoc, condition)
 	if err != nil {
-		basic.GlobalLogger.Error("[plugins load error ]" , err)
+		logging.GlobalLogger.Error("[plugins load error ]" , err)
 		return err
 	}
-	basic.GlobalLogger.Debug("[plugins load success]")
+	logging.GlobalLogger.Debug("[plugins load success]")
 
 	// 并发限制
 	var wg sync.WaitGroup
-	p, _ := ants.NewPoolWithFunc(basic.GlobalConfig.PluginsConfig.Parallel, func(i interface{}) {
+	p, _ := ants.NewPoolWithFunc(conf.GlobalConfig.PluginsConfig.Parallel, func(i interface{}) {
 		rule.RunPoc(i)
 		rule.ScanItemPut(i)
 		wg.Done()
@@ -94,34 +93,34 @@ func RunCli(c *cli.Context) error{
 
 	switch {
 	case url != "":
-		oreq, err := utils.GenOriginalReq(url)
+		oreq, err := util.GenOriginalReq(url)
 		if err != nil {
-			basic.GlobalLogger.Error("[original request gen err ]" , err)
+			logging.GlobalLogger.Error("[original request gen err ]" , err)
 			return err
 		}
-		basic.GlobalLogger.Info("[start check url ]" ,url)
+		logging.GlobalLogger.Info("[start check url ]" ,url)
 		rule.RunPlugins(oreq, vuls)
 
 	case urlFile != "":
-		targets := utils.ReadingLines(urlFile)
+		targets := file.ReadingLines(urlFile)
 		for _, url := range targets {
-			oreq, err := utils.GenOriginalReq(url)
+			oreq, err := util.GenOriginalReq(url)
 			if err != nil {
-				basic.GlobalLogger.Error("[original request gen err ]" , err)
+				logging.GlobalLogger.Error("[original request gen err ]" , err)
 				return err
 			}
-			basic.GlobalLogger.Info("[start check url ]" ,url)
+			logging.GlobalLogger.Info("[start check url ]" ,url)
 			rule.RunPlugins(oreq, vuls)
 		}
 	case rawFile != "":
 		raw, err := ioutil.ReadFile(rawFile)
 		if err != nil {
-			basic.GlobalLogger.Error("[load url from file err ]" , err)
+			logging.GlobalLogger.Error("[load url from file err ]" , err)
 			return err
 		}
 		oreq, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(raw)))
 		if err != nil {
-			basic.GlobalLogger.Error("[original request gen err ]" , err)
+			logging.GlobalLogger.Error("[original request gen err ]" , err)
 			return err
 		}
 		if !oreq.URL.IsAbs() {
@@ -129,7 +128,7 @@ func RunCli(c *cli.Context) error{
 			oreq.URL.Scheme = scheme
 			oreq.URL.Host = oreq.Host
 		}
-		basic.GlobalLogger.Info("[start check url ]" ,oreq.URL.String())
+		logging.GlobalLogger.Info("[start check url ]" ,oreq.URL.String())
 		rule.RunPlugins(oreq, vuls)
 
 	default:

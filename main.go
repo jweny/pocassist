@@ -1,7 +1,7 @@
 package main
 
 import (
-	"pocassist/cmd"
+	"github.com/jweny/pocassist/cmd"
 )
 
 func main() {

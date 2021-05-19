@@ -1,6 +1,11 @@
+serverConfig:
+  jwt_secret: "pocassist"
+  run_mode: "release"
+  log_name : "debug.log"
+
 # HTTP配置
 httpConfig:
-  proxy: ""
+  proxy: "127.0.0.1:8080"
   # 读取http响应超时时间
   http_timeout: 10
   # tcp 超时时间
