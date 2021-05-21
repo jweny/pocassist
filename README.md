@@ -89,7 +89,9 @@ pocassist分为两种模式：
 
 `/pocassist_darwin_amd64 cli -h`
 
-命令行参数详细说明、配置文件说明、web端操作可参考使用手册。
+### 使用手册
+
+命令行参数详细说明、配置文件说明、web端操作可参考[使用手册](https://github.com/jweny/pocassist/blob/master/docs/%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C.md)。
 
 ## 常见问题
 
@@ -128,6 +130,8 @@ pocassist分为两种模式：
 <p align="left">
    <img alt="jweny wechat: bad-lucifer" src="docs/pic.assets/wechat.jpeg" width="150"/>
 </p>
+
+
 ## 免责声明
 
 未经授权，使用pocassist攻击目标是非法的。pocassist仅用于安全测试目的。为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。

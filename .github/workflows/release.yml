@@ -16,21 +16,34 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: "1.13.x"
+      
+      -
+        name: Build with xgo
+        uses: crazy-max/ghaction-xgo@v1
+        with:
+          xgo_version: latest
+          go_version: ${{ matrix.go_version }}
+          dest: build
+          prefix: myapp
+          targets: windows/amd64,windows/386,linux/386,linux/amd64,linux/arm,linux/arm64,darwin/amd64
+          v: true
+          x: false
+          race: false
+          ldflags: -s -w
+          buildmode: default
 
-      - name: Build cgo
+      - name: Build zip
         run: |
-          go get github.com/monkeyWie/xgo
-          ~/go/bin/xgo -targets=windows/amd64,windows/386,linux/386,linux/amd64,linux/arm,linux/arm64,darwin/amd64, -ldflags="-w -s" -out=pocassist .
+          
+          mv build/myapp-windows*386.exe pocassist_windows_386.exe
+          mv build/myapp-windows*amd64.exe pocassist_windows_amd64.exe
 
-          mv pocassist-windows*386.exe pocassist_windows_386.exe
-          mv pocassist-windows*amd64.exe pocassist_windows_amd64.exe
+          mv build/myapp-linux-*386 pocassist_linux_386
+          mv build/myapp-linux-*amd64 pocassist_linux_amd64
+          mv build/myapp-linux-*arm64 pocassist_linux_arm64
+          mv build/myapp-linux-*arm-* pocassist_linux_arm
 
-          mv pocassist-linux-*386 pocassist_linux_386
-          mv pocassist-linux-*amd64 pocassist_linux_amd64
-          mv pocassist-linux-*arm64 pocassist_linux_arm64
-          mv pocassist-linux-*arm-* pocassist_linux_arm
-
-          mv pocassist-darwin-*amd64 pocassist_darwin_amd64
+          mv build/myapp-darwin-*amd64 pocassist_darwin_amd64
 
           zip pocassist_windows_386.zip pocassist_windows_386.exe pocassist.db pocassist.sql config.yaml
           zip pocassist_windows_amd64.zip pocassist_windows_amd64.exe pocassist.db pocassist.sql config.yaml
@@ -53,72 +66,38 @@ jobs:
           draft: false
           prerelease: true
 
-      - name: Upload Release - Windows amd64
+      - name: Upload Release windows
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_windows_amd64.zip
-          asset_name: pocassist_windows_amd64.zip
+          asset_path: ./pocassist-windows-x64.zip
+          asset_name: pocassist-${{ steps.create_release.outputs.tag }}-windows-x64.zip
           asset_content_type: application/zip
 
-      - name: Upload Release - Windows 386
+      - name: Upload Release linux
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_windows_386.zip
-          asset_name: pocassist_windows_386.zip
+          asset_path: ./pocassist-linux-x64.zip
+          asset_name: pocassist-${{ steps.create_release.outputs.tag }}-linux-x64.zip
           asset_content_type: application/zip
 
-      - name: Upload Release - Linux amd64
+      - name: Upload Release cgo darwin
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_linux_amd64.zip
-          asset_name: pocassist_linux_amd64.zip
+          asset_path: ./pocassist-darwin-x64.zip
+          asset_name: pocassist-${{ steps.create_release.outputs.tag }}-darwin-x64.zip
           asset_content_type: application/zip
 
-      - name: Upload Release - Linux 386
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_linux_386.zip
-          asset_name: pocassist_linux_386.zip
-          asset_content_type: application/zip
 
-      - name: Upload Release - Linux arm64
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_linux_arm64.zip
-          asset_name: pocassist_linux_arm64.zip
-          asset_content_type: application/zip
 
-      - name: Upload Release - Linux arm
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_linux_arm.zip
-          asset_name: pocassist_linux_arm.zip
-          asset_content_type: application/zip
 
-      - name: Upload Release - Darwin amd64
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./pocassist_darwin_amd64.zip
-          asset_name: pocassist_darwin_amd64.zip
-          asset_content_type: application/zip
+
+
