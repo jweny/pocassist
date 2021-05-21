@@ -65,6 +65,7 @@ var GlobalConfig *Config
 // 加载配置
 func Setup() {
 	// 加载config
+	var err error
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatalf("config.Setup, fail to get current path: %v", err)

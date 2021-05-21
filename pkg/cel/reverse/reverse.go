@@ -31,7 +31,6 @@ func NewReverse() *proto.Reverse {
 }
 
 func ReverseCheck(r *proto.Reverse, timeout int64) bool {
-	// todo
 	ceyeApiToken := conf.GlobalConfig.Reverse.ApiKey
 	if ceyeApiToken == "" || r.Domain == "" {
 		return false

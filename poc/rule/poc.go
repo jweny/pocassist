@@ -30,7 +30,7 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 	}
 	handles := getHandles(vul.Affects)
-	logging.GlobalLogger.Debug("[plugin is running ]" , vul.VulId, " [affects] ", vul.Affects)
+	logging.GlobalLogger.Debug("[plugin running ]" , vul.VulId, " [affects] ", vul.Affects, " [name] ", vul.JsonPoc.Name)
 	// 影响为参数类型
 	if vul.Affects == AffectReplaceParameter || vul.Affects == AffectAppendParameter {
 		var originalGetParamFields url.Values
@@ -57,25 +57,22 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 			logging.GlobalLogger.Error("[plugin cel env gen err ]" , vul.VulId)
 			return nil, err
 		}
-		logging.GlobalLogger.Debug("[plugin cel env gen success ]" , vul.VulId)
 		newReq, err := InitNewReq(originalReq)
 		if err != nil {
 			logging.GlobalLogger.Error("[plugin new request init err ]" , vul.VulId)
 			return nil, err
 		}
-		logging.GlobalLogger.Debug("[plugin new request init success ]" , vul.VulId)
 		varMap, err := ParsePocSet(vul.JsonPoc, env, newReq)
 		if err != nil {
 			util.RequestPut(newReq)
 			logging.GlobalLogger.Error("[plugin poc set parse err ]", vul.VulId, err)
 			return nil, err
 		}
-		logging.GlobalLogger.Debug("[plugin poc set already injected to cel ]" , vul.VulId)
 		for field := range originalGetParamFields {
 			for _, value := range vul.JsonPoc.Params {
 				// 限速
 				LimitWait()
-				logging.GlobalLogger.Debug("[plugin current param is ]", value)
+				logging.GlobalLogger.Debug("[current param]", value)
 
 				controller := InitPocController(originalReq, vul.JsonPoc, vul.Affects, data)
 				controller.celEnv = env
@@ -92,7 +89,11 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 				if controller.IsAborted() {
 					controller.Reset()
 					util.RequestPut(newReq)
-					logging.GlobalLogger.Debug("[plugin find vul ]", vul.VulId, "[param ]" ,value)
+					logging.GlobalLogger.Info("[plugin result ]\n",
+						" [vul_id] ", vul.VulId,
+						" [vul_name] ", vul.JsonPoc.Name,
+						" [param] ", value)
+
 					return util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList), nil
 				}
 				controller.Reset()
@@ -107,21 +108,19 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 			logging.GlobalLogger.Error("[plugin cel env gen err ]" , vul.VulId)
 			return nil, err
 		}
-		logging.GlobalLogger.Debug("[plugin cel env gen success ]" , vul.VulId)
 		newReq, err := InitNewReq(originalReq)
 		if err != nil {
 			logging.GlobalLogger.Error("[plugin new request init err ]" , vul.VulId)
 			return nil, err
 		}
-		logging.GlobalLogger.Debug("[plugin new request init success ]" , vul.VulId)
 		varMap, err := ParsePocSet(vul.JsonPoc, env, newReq)
 		if err != nil {
 			util.RequestPut(newReq)
 			logging.GlobalLogger.Error("plugin poc set parse err ]", vul.VulId, err)
 			return nil, err
 		}
-
-		logging.GlobalLogger.Debug("[plugin poc set already injected to cel ]" , vul.VulId)
+		// 限速
+		LimitWait()
 		controller := InitPocController(originalReq, vul.JsonPoc, vul.Affects, data)
 		controller.celEnv = env
 		controller.varMap = varMap
@@ -134,8 +133,12 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		}
 
 		if controller.IsAborted() {
-			logging.GlobalLogger.Debug("[===plugin find vul===]", vul.VulId)
-			return util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList), nil
+			result := util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList)
+			logging.GlobalLogger.Info("[plugin scan result ]\n",
+				" [vul_id] ", vul.VulId,
+				" [vul_name] ", vul.JsonPoc.Name,
+				" [vul_result] ", result)
+			return result, nil
 		}
 		controller.Reset()
 		util.RequestPut(newReq)

@@ -188,7 +188,7 @@ func RunPlugin(c *gin.Context) {
 		} else {
 			poc, err := rule.ParseJsonPoc(run.JsonPoc)
 			if err != nil {
-				logging.GlobalLogger.Error("[plugins plugin load err ]",)
+				logging.GlobalLogger.Error("[plugins.go] fail to load plugins")
 				c.JSON(msg.ErrResp("规则加载失败"))
 			}
 			currentPlugin := rule.Plugin{

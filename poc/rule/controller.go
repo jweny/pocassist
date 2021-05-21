@@ -271,12 +271,7 @@ func (controller *PocController) ParsePocRule() (bool, error) {
 			// 其中任何一次失败，都将直接跳出循环
 			break
 		}
-
-		logging.GlobalLogger.Info("============")
-		logging.GlobalLogger.Info("req:", resp.ReqRaw)
-		logging.GlobalLogger.Info("resp:", resp.RespRaw)
 		controller.respList = append(controller.respList, resp)
-		logging.GlobalLogger.Info("============")
 		success = true
 	}
 	return success, nil

@@ -16,7 +16,7 @@ var subCommandServer = cli.Command{
 			Name:  "port",
 			Aliases: []string{"p"},
 			Value: "1231",
-			Usage: "api server port",
+			Usage: "web server `PORT`",
 		},
 	},
 	Action: RunServer,

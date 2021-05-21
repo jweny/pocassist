@@ -4,16 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/jweny/pocassist/pkg/file"
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
 	"github.com/jweny/pocassist/poc/rule"
-	"github.com/panjf2000/ants/v2"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
 	"net/http"
-	"sync"
 )
 
 var subCommandCli = cli.Command {
@@ -24,7 +21,7 @@ var subCommandCli = cli.Command {
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name: "loadPoc",
-			Aliases: []string{"lp"},
+			Aliases: []string{"l"},
 			Destination: &loadPoc,
 			Value: "",
 			Usage:
@@ -36,7 +33,7 @@ var subCommandCli = cli.Command {
 				"		default: load all enable plugins\n"},
 		&cli.StringFlag{
 			Name: "condition",
-			Aliases: []string{"c"},
+			Aliases: []string{"o"},
 			Destination: &condition,
 			Value: "",
 			Usage:
@@ -51,16 +48,16 @@ var subCommandCli = cli.Command {
 			Aliases: []string{"u"},
 			Destination: &url,
 			Value: "",
-			Usage: "only single url to scan"},
+			Usage: "only single `URL` to scan"},
 		&cli.StringFlag{
 			Name: "urlFile",
-			Aliases: []string{"uf"},
+			Aliases: []string{"f"},
 			Destination: &urlFile,
 			Value: "",
-			Usage: "load urls from file"},
+			Usage: "load urls from `File`"},
 		&cli.StringFlag{
 			Name: "urlRaw",
-			Aliases: []string{"ur"},
+			Aliases: []string{"r"},
 			Destination: &rawFile,
 			Value: "",
 			Usage: "load urls from request raw `File`"},
@@ -77,16 +74,6 @@ func RunCli(c *cli.Context) error{
 		return err
 	}
 	logging.GlobalLogger.Debug("[plugins load success]")
-
-	// 并发限制
-	var wg sync.WaitGroup
-	p, _ := ants.NewPoolWithFunc(conf.GlobalConfig.PluginsConfig.Parallel, func(i interface{}) {
-		rule.RunPoc(i)
-		rule.ScanItemPut(i)
-		wg.Done()
-	})
-	wg.Wait()
-	defer p.Release()
 
 	// 速率限制
 	rule.InitRate()

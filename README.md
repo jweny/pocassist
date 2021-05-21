@@ -1,214 +1,105 @@
 <p align="center">
    <img alt="pocassist" src="docs/pic.assets/logo.png" width="200"/>
-   <h3 align="center">POCASSIST</h3>
-   <p align="center">全新的开源漏洞测试框架，支持poc的在线编辑、管理、测试</p>
 </p>
 
+## pocassist
 
+pocassist是一个 Go (Golang) 编写的全新的开源漏洞测试框架，实现对poc的在线编辑、管理、测试。
 
-pocassist是一款全新的开源漏洞测试框架，无需代码知识也可实现对poc的在线编辑、管理、测试。
+如果你不想撸代码，又想实现poc的逻辑，又想在线对靶机快速测试，那就使用pocassist吧。
 
-pocassist借鉴了xray优秀的规则体系。但这不是一个xray的轮子，也不仅仅只是框架，我希望pocassist能成为帮助安全开发人员只需专注于poc的逻辑实现，而不必的耗费精力开发代码和维护漏洞库。
+## 特性
 
+### 规则体系
 
+- pocassist借鉴了xray优秀的规则体系。通过基于CEL表达式定义poc规则。
 
-## 免责声明
+- 完全兼容xray现有规则。
 
-未经授权，使用pocassist攻击目标是非法的。pocassist仅用于安全测试目的。
+- 不仅仅是xray。pocassist除了支持定义目录级漏洞poc，还支持服务器级漏洞、参数级漏洞、url级漏洞以及对页面内容检测，如果以上还不满足你的需求，还支持加载自定义脚本。
 
-为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。
+### 性能
 
+高并发：支持批量运行poc，通过使用 `ants`实例化协程池，复用 goroutine ，节省资源，提升性能。
 
+### 资源
 
-## 介绍
+小内存占用：使用内存复用机制。每个poc / 请求 / 响应 均使用`sync.Pool` 来缓存对象，减轻GC消耗。
 
-- pocassist借鉴了xray优秀的规则体系。基于CEL表达式定义poc规则。
-- 不仅仅是xray。pocassist除了支持目录级漏洞的poc，还支持：
-  - 服务器级漏洞
-  - 参数级漏洞（替换完整参数  /  在参数后拼接url）
-  - url级漏洞
-  - 页面内容检测
-  - 如果以上还不满足你的需求，还支持加载自定义脚本进行检测
+### 易用
 
-- poc在线编辑。提供了前端UI，可对poc规则进行在线编辑。
-- 所有poc均以json格式存入数据库。因此支持批量加载poc，对批量资产进行漏洞检测。批量加载poc时，支持自定义搜索条件指定执行哪些poc。
-- 实现内存复用以及对并发的颗粒度控制。使用更少的请求，更少的内存资源进行漏洞检测。
-- 支持命令行启动和web端启动。web端使用 gin + react 开发。
+pocassist 为单二进制文件，无依赖，也无需安装，下载后直接使用。
 
-
-
-所以...
-
-你可以使用pocassist作为自己的poc管理平台，可以方便快捷的进行在线poc管理&编辑&测试...
-
-你也可以直接通过pocassist对目标进行批量漏洞验证...
-
-你还可以在你的漏洞测试工具里通过命令行 / api 调用 pocassist...
-
-或许你想研究xray是如何解析规则进行检测的，也可以看下pocassist...
-
-
-
-![架构图](docs/pic.assets/架构图.jpg)
-
-### web
-
-前端UI使用 react + antd开发。已单独拆分成一个项目，有兴趣的可以单独看这里：
-
-https://github.com/jweny/pocassistweb
+## Demo
 
 ![登录页](docs/pic.assets/登录页.jpg)
 
-
+### 漏洞管理
 
 ![漏洞描述](docs/pic.assets/漏洞描述.jpg)
 
-
-
 ![漏洞描述详情](docs/pic.assets/漏洞描述详情.jpg)
 
-
+### poc管理
 
 ![poc](docs/pic.assets/poc.jpg)
 
-poc在线编辑：
+poc编辑
 
 ![poc编辑](docs/pic.assets/poc编辑.jpg)
 
-poc测试（漏洞检测）：
+poc运行
 
 ![poc运行结果](docs/pic.assets/poc运行结果.jpg)
 
-### cli
-
-通过命令行对目标url进行验证：
-
-![命令行执行](docs/pic.assets/命令行执行.jpg)
-
-
-
 ## 快速开始
 
-### 部署
+### 下载
 
-1. 从release中下载相应系统版本的zip文件，其中包括：
+直接下载相应系统构建的二进制文件即可，下载时选择最新的版本。
 
-- 二进制文件：pocassist
-- 配置文件：config.yaml
-- 数据库文件：sqlite(pocassist.db) + mysql(pocassist.sql)
+下载地址：https://github.com/jweny/pocassist/releases/
 
-2. 编辑config.yaml，配置数据库以及其他个性化配置
+### 运行
 
-3. 运行
+pocassist分为两种模式：
 
-- 如果使用默认端口（默认端口：1231）：`./pocassist server`
-- 如果使用其他端口，如8888：`./pocassist server --port 8888`
-- 默认使用sqlite数据库，如果使用mysql请自行建库导数据。
+- web：提供web页面进行在线poc编辑和测试
+- cli：提供批量扫描功能
 
-### 开发
+如使用默认配置，可直接运行二进制文件。这里以pocassist_darwin_amd64为例：
 
-#### api
+ `./pocassist_darwin_amd64 -h`
 
-```
-git clone https://github.com/jweny/pocassist.git
+#### web端
 
-cd pocassist
+运行web端，默认1231端口。：
 
-go build -o pocassist
+`./pocassist_darwin_amd64 server`
 
-# 创建数据库。修改config.yaml
+自定义端口，如8888：
 
-./pocassist
-```
+`./pocassist_darwin_amd64 server -p 8888`
 
-#### 前端
+默认账号密码：`admin/admin2`
 
-develope模式下前端默认运行在3333端口 
+#### cli
 
-后端在craco.config.js中配置，默认为`127.0.0.1:1231`
+如果想进行批量poc测试，可使用命令行：
 
-```
-cd pocassist/web
+`/pocassist_darwin_amd64 cli -h`
 
-yarn start
-```
+命令行参数详细说明、配置文件说明、web端操作可参考使用手册。
 
+## 常见问题
 
+1. config.yaml 加载失败：config.yaml要与pocassist二进制文件放置于同一目录中。
 
-## 使用
+2. 使用mysql时，数据库初始化失败：如果后端使用mysql数据库，一定先创建数据库，导入数据，并将数据库信息更新至config.yaml后，再运行pocassist。
 
-![0.2.0help-1](docs/pic.assets/0.2.0help-1.jpg)
+3. 目前前端有一个小bug，首次登陆成功之后，跳转至/vul时会显示空，需要强制刷新下。
 
-### web
-
-```
-./pocassist server -p 端口
-```
-
-==========详细的web界面使用手册正在疯狂编写中==============
-
-### cli
-
-```
-./pocassist cli -h
-```
-
-![help-2](docs/pic.assets/help-2.jpg)
-
-#### 参数释义
-
-- url参数为检测单个url
-
-- urlFile参数为从文件批量加载url
-
-- urlRaw参数为从文件中加载请求报文
-
-- loadPoc 参数为加载规则的类型，缩写：
-  - single为单个规则
-  - multi为多个规则
-  - all为全部规则
-  - affects为加载某种类型的规则
-
-- condition 为 不同loadPoc条件下的查询条件：
-  - 当loadPoc为single时，查询条件为：单个pocID
-
-    ```
-    ./pocassist cli -lp single -c poc-db-145 -u http://xxx.xxx.xxx.xxx
-    # 如果启用debug
-    ./pocassist -d cli -lp single -c poc-db-145 -u http://xxx.xxx.xxx.xxx
-    ```
-
-  - 当loadPoc为multi时，查询条件为：多个pocID，逗号隔开
-
-    ```
-    ./pocassist cli -lp multi -c poc-db-145,poc-db-146,poc-db-147 -u http://xxx.xxx.xxx.xxx
-    ```
-
-  - 当loadPoc为all时，不需要查询条件
-
-    ```
-    ./pocassist cli -lp all -u http://xxx.xxx.xxx.xxx
-    ```
-
-  - 当loadPoc为affects时，查询条件为漏洞类型：directory / server / text / script / url / appendparam / replaceparam
-
-    ```
-    ./pocassist cli -lp affects  -c directory -u http://xxx.xxx.xxx.xxx
-    ```
-
-
-
-## 常问问题
-
-1. 数据库中默认登录的账号密码：admin/admin2
-
-2. 数据库初始化失败 / config.yaml 加载失败：
-
-   一定先创建数据库，导入数据，并将数据库信息更新至config.yaml后，再使用本工具。
-
-   config.yaml要与pocassist二进制文件放置于同一目录中。
-
-3. `go get ./... connection error`
+4. `go get ./... connection error`
 
    启用goproxy（请参阅此[文章](https://madneal.com/post/gproxy/)以进行golang升级）：
 
@@ -217,97 +108,31 @@ yarn start
    go env -w GO111MODULE=on
    ```
 
-4. 如果使用前后端分离部署的师傅依旧可以使用0.1.0版本，部署方式
+5. 如果使用前后端分离部署的师傅可自行打包前端。
 
-   从release中下载相应系统版本的zip文件，其中包括：
-
-   - pocassist二进制文件
-
-   - 打包好的前端 `build`文件夹
-
-   - config.yaml
-
-     api
-
-   1. 创建pocassist数据库，并将pocassist.sql导入。
-
-   2. 编辑config.yaml，配置数据库以及其他个性化配置
-
-   3. 运行服务端
-
-      - 如果使用默认端口（默认端口：1231）：`./pocassist server`
-      - 如果使用其他端口，如8888：`./pocassist server --port 8888`
-
-      web
-
-   4. 准备release中的`build`。
-
-   5. 安装nginx。修改nginx.conf反向代理后端。
-
-   ```
-   upstream pocassistAPI {
-   				# 配置后端端口
-           server 127.0.0.1:1231;
-       }
-   server {
-           listen       80;
-           location / {
-           		# 配置build文件夹路径
-               root /opt/pocassistWEB/build/;
-           }
-   
-           location /api/ {
-               proxy_pass http://pocassistAPI/api/;
-           }
-   
-           error_page 404 /404.html;
-               location = /40x.html {
-           }
-   
-           error_page 500 502 503 504 /50x.html;
-               location = /50x.html {
-           }
-       }
-   ```
-
-   ### 
+   https://github.com/jweny/pocassistweb
 
 ## todo
 
-- 由于实现的细节较多，详细的规则编辑使用手册正在疯狂编写中
-
-- 修改前端参数级漏洞参数列表不显示的bug
-
-- 前端批量执行多个poc
-
-- server api 优化
-
-- 收集更多的poc
-
-- ~~实现一个二进制走天下：数据库支持sqlite，并将前端打包进二进制~~ 已经搞定
-
-  
+- 目前cli端的批量快扫功能为临时方案，后续所有批量快扫功能web端都将支持。
+- 发现潜在bug
+- json参数解析
+- 修复前端bug
+  - 初次加载时要强制刷新
+  - 参数级扫描：payload列表前端未提供在线编辑
 
 ## 微信
 
-如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，或者对其他安全工具有改造想法的，欢迎添加我的微信一块交流。
+如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加我的微信进行交流。
 
 <p align="left">
    <img alt="jweny wechat: bad-lucifer" src="docs/pic.assets/wechat.jpeg" width="150"/>
 </p>
+## 免责声明
 
+未经授权，使用pocassist攻击目标是非法的。pocassist仅用于安全测试目的。为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。
 
-只聊技术，不扯虚的！
-
-
-
-## License
-
-[Apache License 2.0](https://github.com/madneal/gshark/blob/master/LICENSE)
-
-
-
-## 参考
+## 参考项目
 
 - https://github.com/chaitin/xray/tree/master/pocs
 - https://phith0n.github.io/xray-poc-generation/

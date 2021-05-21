@@ -9,7 +9,6 @@ import (
 	"golang.org/x/time/rate"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -35,20 +34,6 @@ type ScanItem struct {
 	Vul *Plugin       // vul from db
 }
 
-var scanItemPool sync.Pool = sync.Pool{
-	New: func() interface{} {
-		return new(ScanItem)
-	},
-}
-
-func ScanItemPut(i interface{}) {
-	item := i.(*ScanItem)
-	item.Req = nil
-	item.Vul = nil
-	scanItemPool.Put(item)
-	return
-}
-
 var Handles map[string][]HandlerFunc
 
 func ExecExpressionHandle(controller *PocController) error {
@@ -63,10 +48,15 @@ func ExecExpressionHandle(controller *PocController) error {
 		return err
 	}
 	if result {
+		logging.GlobalLogger.Info("[=== find vul===]\n",
+			" [vul_id] ", controller.vulId,
+			" [vul_name] ", controller.poc.Name)
 		controller.Abort()
 	}
 
-	logging.GlobalLogger.Debug("[plugin finish]", controller.poc.Name)
+	logging.GlobalLogger.Info("[=== not vul===]\n",
+		" [vul_id] ", controller.vulId,
+		" [vul_name] ", controller.poc.Name)
 	return nil
 }
 

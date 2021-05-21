@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/logging"
+	"github.com/panjf2000/ants/v2"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 const (
@@ -110,15 +112,20 @@ func LoadPlugins(loadType string, conditions string) ([]Plugin, error) {
 
 // 批量执行plugin
 func RunPlugins(oreq *http.Request, rules []Plugin){
-	for _, curRule := range rules {
-		item := &ScanItem{oreq, &curRule}
-		result, err := RunPoc(item)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugins plugin run err ]", curRule.VulId)
-		}
-		logging.GlobalLogger.Info("[plugin result ]\n",
-			" [vul_id] ", curRule.VulId,
-			" [vul_name] ", curRule.JsonPoc.Name,
-			" [vul_result] ", result)
+	// 并发限制
+	var wg sync.WaitGroup
+	//parallel := conf.GlobalConfig.PluginsConfig.Parallel
+
+	p, _ := ants.NewPoolWithFunc(10, func(item interface{}) {
+		RunPoc(item)
+		wg.Done()
+	})
+	defer p.Release()
+
+	for i := range rules {
+		item := &ScanItem{oreq, &rules[i]}
+		wg.Add(1)
+		p.Invoke(item)
 	}
+	wg.Wait()
 }

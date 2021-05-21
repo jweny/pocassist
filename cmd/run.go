@@ -29,15 +29,14 @@ func InitAll() {
 	db.Setup(dbname)
 	routers.Setup()
 	util.Setup()
-	util.Setup()
 	rule.Setup()
 }
 
 func RunApp() {
 	app := cli.NewApp()
-	app.Name = "PocAssist"
+	app.Name = "pocassist"
 	app.Usage = "New POC Framework Without Writing Code"
-	app.Version = "1.0.0"
+	app.Version = "0.3.0"
 	// 全局flag
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -48,7 +47,7 @@ func RunApp() {
 			Usage: "enable debug log"},
 		&cli.StringFlag{
 			Name: "database",
-			Aliases: []string{"db"},
+			Aliases: []string{"b"},
 			Destination: &dbname,
 			Value: "sqlite",
 			Usage: "kind of database, default: sqlite"},

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/conf"
-	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
@@ -200,11 +199,6 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 		Req: req,
 	}
 	curResp.ReqRaw = reqf.FormatContent()
-	logging.GlobalLogger.Debug("[http request start ]", "============")
-	logging.GlobalLogger.Debug(curResp.ReqRaw)
-	logging.GlobalLogger.Debug(curResp.RespRaw)
-	logging.GlobalLogger.Debug("[http request finish]", "============")
-
 	return curResp, err
 }
 
