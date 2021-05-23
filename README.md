@@ -34,23 +34,25 @@ pocassist 为单二进制文件，无依赖，也无需安装，下载后直接�
 
 ![登录页](docs/pic.assets/登录页.jpg)
 
-### 漏洞管理
-
-![漏洞描述](docs/pic.assets/漏洞描述.jpg)
-
-![漏洞描述详情](docs/pic.assets/漏洞描述详情.jpg)
-
 ### poc管理
 
 ![poc](docs/pic.assets/poc.jpg)
 
-poc编辑
+poc在线编辑
 
 ![poc编辑](docs/pic.assets/poc编辑.jpg)
 
-poc运行
+poc在线运行
 
 ![poc运行结果](docs/pic.assets/poc运行结果.jpg)
+
+### 漏洞管理
+
+每个poc可以关联配套的漏洞描述。
+
+![漏洞描述](docs/pic.assets/漏洞描述.jpg)
+
+![漏洞描述详情](docs/pic.assets/漏洞描述详情.jpg)
 
 ## 快速开始
 
