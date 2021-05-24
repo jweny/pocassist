@@ -75,9 +75,6 @@ func RunCli(c *cli.Context) error{
 	}
 	logging.GlobalLogger.Debug("[plugins load success]")
 
-	// 速率限制
-	rule.InitRate()
-
 	switch {
 	case url != "":
 		oreq, err := util.GenOriginalReq(url)

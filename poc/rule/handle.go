@@ -105,6 +105,9 @@ func Setup() {
 	Handles[AffectScript] = []HandlerFunc{ExecScriptHandle}
 	Handles[AffectAppendParameter] = []HandlerFunc{ExecExpressionHandle}
 	Handles[AffectReplaceParameter] = []HandlerFunc{ExecExpressionHandle}
+
+	// 速率限制
+	InitRate()
 }
 
 func getHandles(affect string) []HandlerFunc {
