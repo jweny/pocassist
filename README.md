@@ -1,5 +1,5 @@
 <p align="center">
-   <img alt="pocassist" src="docs/pocassist.wiki/pic/logo.png" width="200"/>
+   <img alt="pocassist" src="docs/pic/logo.png" width="200"/>
 </p>
 
 
@@ -33,27 +33,27 @@ pocassist 为单二进制文件，无依赖，也无需安装，下载后直接�
 
 ## Demo
 
-![登录页](docs/pocassist.wiki/pic/login.jpg)
+![登录页](docs/pic/login.jpg)
 
 ### poc管理
 
-![poc](docs/pocassist.wiki/pic/poc.jpg)
+![poc](docs/pic/poc.jpg)
 
 poc在线编辑
 
-![poc编辑](docs/pocassist.wiki/pic/poc-edit.jpg)
+![poc编辑](docs/pic/poc-edit.jpg)
 
 poc在线运行
 
-![poc运行结果](docs/pocassist.wiki/pic/poc-result.jpg)
+![poc运行结果](docs/pic/poc-result.jpg)
 
 ### 漏洞管理
 
 每个poc可以关联配套的漏洞描述。
 
-![漏洞描述](docs/pocassist.wiki/pic/vul.jpg)
+![漏洞描述](docs/pic/vul.jpg)
 
-![漏洞描述详情](docs/pocassist.wiki/pic/vul-desc.jpg)
+![漏洞描述详情](docs/pic/vul-desc.jpg)
 
 ## 快速开始
 
@@ -131,7 +131,7 @@ pocassist分为两种模式：
 如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加我的微信进行交流。
 
 <p align="left">
-   <img alt="jweny wechat: bad-lucifer" src="docs/pocassist.wiki/pic/wechat.jpeg" width="150"/>
+   <img alt="jweny wechat: bad-lucifer" src="docs/pic/wechat.jpeg" width="150"/>
 </p>
 
 
