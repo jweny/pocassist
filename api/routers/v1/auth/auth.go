@@ -1,4 +1,4 @@
-package v1
+package auth
 
 import (
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ type ResetPwd struct {
 	NewPassword string `json:"newpassword"`
 }
 
-func GetAuth(c *gin.Context) {
+func Login(c *gin.Context) {
 	login := auth{}
 	err := c.BindJSON(&login)
 	if err != nil {
@@ -48,7 +48,7 @@ func GetAuth(c *gin.Context) {
 	}
 }
 
-func SelfResetPassword(c *gin.Context) {
+func Reset(c *gin.Context) {
 	resetPwd := ResetPwd{}
 	err := c.BindJSON(&resetPwd)
 	if err != nil {
@@ -71,7 +71,7 @@ func SelfResetPassword(c *gin.Context) {
 	}
 }
 
-func SelfGetInfo(c *gin.Context) {
+func Self(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	claims, err := util.ParseToken(token)
 	if err != nil || claims == nil {
@@ -84,7 +84,7 @@ func SelfGetInfo(c *gin.Context) {
 	return
 }
 
-func SelfLogout(c *gin.Context) {
+func Logout(c *gin.Context) {
 	// 后端伪登出 todo:优化jwt
 	c.JSON(msg.SuccessResp("登出成功"))
 	return

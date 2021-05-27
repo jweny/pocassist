@@ -4,7 +4,8 @@ import (
 	"gorm.io/datatypes"
 )
 
-// 数据库 plugins 表
+// plugins 表
+
 type Plugin struct {
 	Id            int            `gorm:"primary_key" json:"id"`
 	VulId         string         `gorm:"column:vul_id" json:"vul_id"`

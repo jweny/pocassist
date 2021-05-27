@@ -15,7 +15,6 @@ var GlobalDB *gorm.DB
 func Setup() {
 	var err error
 	dbConfig := conf.GlobalConfig.DbConfig
-
 	if conf.GlobalConfig.DbConfig.Sqlite == "" {
 		// 配置mysql数据源
 		if dbConfig.Mysql.User == "" ||
@@ -57,6 +56,10 @@ func Setup() {
 	if err != nil {
 		log.Fatalf("db.Setup err: %v", err)
 	}
-	GlobalDB.Logger = logger.Default.LogMode(logger.Silent)
+
+	if conf.GlobalConfig.ServerConfig.RunMode == "release" {
+		// release下
+		GlobalDB.Logger = logger.Default.LogMode(logger.Silent)
+	}
 }
 

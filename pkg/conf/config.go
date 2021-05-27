@@ -2,7 +2,6 @@ package conf
 
 import (
 	"bytes"
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -79,7 +78,6 @@ func Setup() {
 		//	没有，生成默认yaml
 		WriteYamlConfig(configFile)
 	}
-	// watch配置
 	ReadYamlConfig(configFile)
 
 }
@@ -101,12 +99,6 @@ func ReadYamlConfig(configFile string) {
 	if err != nil {
 		log.Fatalf("conf.Setup, fail to verify 'config.yaml', check format: %v", err)
 	}
-	// watch 监控配置文件变化
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		// 配置文件发生变更之后会调用的回调函数
-		log.Println("Config file changed:", e.Name)
-	})
 }
 
 func WriteYamlConfig(configFile string) {

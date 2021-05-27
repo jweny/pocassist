@@ -24,6 +24,7 @@ var subCommandServer = cli.Command{
 
 func RunServer(c *cli.Context) error {
 	InitAll()
+	HotConf()
 	port := c.String("port")
 	routers.InitRouter(port)
 	return nil

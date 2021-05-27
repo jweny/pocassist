@@ -14,7 +14,9 @@ import (
 )
 
 type clientDoer interface {
+	// 不跟随重定向
 	DoTimeout(req *fasthttp.Request, resp *fasthttp.Response, t time.Duration) error
+	// 跟随重定向
 	DoRedirects(req *fasthttp.Request, resp *fasthttp.Response, maxRedirectsCount int) error
 }
 
@@ -174,11 +176,13 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 	var err error
 
 	if redirect {
+		// 跟随重定向 最大跳转数从conf中加载
+		maxRedirects := conf.GlobalConfig.HttpConfig.MaxRedirect
+		err = fasthttpClient.DoRedirects(req, resp, maxRedirects)
+	} else {
+		// 不跟随重定向
 		timeout := conf.GlobalConfig.HttpConfig.HttpTimeout
 		err = fasthttpClient.DoTimeout(req, resp, time.Duration(timeout)*time.Second)
-	} else {
-		// 不接受跳转
-		err = fasthttpClient.DoRedirects(req, resp, 0)
 	}
 	if err != nil {
 		return nil, err

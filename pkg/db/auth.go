@@ -1,5 +1,7 @@
 package db
 
+// auths 表
+
 type Auth struct {
 	Id       int    `gorm:"primary_key" json:"id"`
 	Username string `json:"username"`

@@ -34,12 +34,55 @@ func SplitToArray(conditions string) []string {
 }
 
 //	从数据库 中加载 poc
+func LoadDbPlugin(lodeType string, array []string) ([]Plugin, error) {
+	// 数据库数据
+	var dbPluginList []db.Plugin
+	// plugin对象
+	var plugins []Plugin
+	switch lodeType {
+	case LoadMulti:
+		// 多个
+		tx := db.GlobalDB.Where("vul_id IN ? AND enable = ?", array, 1).Find(&dbPluginList)
+		if tx.Error != nil {
+			logging.GlobalLogger.Error("[db select err ]", tx.Error)
+			return nil, tx.Error
+		}
+	default:
+		// 默认执行全部启用规则
+		tx := db.GlobalDB.Where("enable = ?", 1).Find(&dbPluginList)
+		if tx.Error != nil {
+			logging.GlobalLogger.Error("[db select err ]", tx.Error)
+			return nil, tx.Error
+		}
+	}
+
+	logging.GlobalLogger.Info("[dbPluginList load number ]", len(dbPluginList))
+
+	for _, v := range dbPluginList {
+		poc, err := ParseJsonPoc(v.JsonPoc)
+		if err != nil {
+			logging.GlobalLogger.Error("[plugins plugin load err ]", v.VulId)
+			continue
+		}
+		plugin := Plugin{
+			VulId:   v.VulId,
+			Affects: v.Affects,
+			JsonPoc: poc,
+			Enable:  v.Enable,
+		}
+		plugins = append(plugins, plugin)
+	}
+	return plugins, nil
+
+}
+
+//	从数据库 中加载 poc
+//	todo delete
 func LoadDbPlugins(loadType string, conditions string) ([]db.Plugin, error) {
 	var plugin db.Plugin
 	var plugins []db.Plugin
 	logging.GlobalLogger.Debug("[loadPoc type ]", loadType)
 	logging.GlobalLogger.Debug("[conditions is ]", conditions)
-	// todo 命令行里传json_str过来
 	switch loadType {
 	case LoadSingle:
 		// 漏洞编号
@@ -66,8 +109,8 @@ func LoadDbPlugins(loadType string, conditions string) ([]db.Plugin, error) {
 		}
 
 	case LoadMulti:
-		plugins := SplitToArray(conditions)
-		tx := db.GlobalDB.Where("vul_id IN ? AND enable = ?", plugins, 1).Find(&plugins)
+		vulList := SplitToArray(conditions)
+		tx := db.GlobalDB.Where("vul_id IN ? AND enable = ?", vulList, 1).Find(&plugins)
 		if tx.Error != nil {
 			logging.GlobalLogger.Error("[db select err ]", tx.Error)
 			return nil, tx.Error
@@ -112,7 +155,7 @@ func LoadPlugins(loadType string, conditions string) ([]Plugin, error) {
 }
 
 // 批量执行plugin
-func RunPlugins(oreq *http.Request, rules []Plugin){
+func RunPlugins(oreq *http.Request, plugins []Plugin){
 	// 并发限制
 	var wg sync.WaitGroup
 	parallel := conf.GlobalConfig.PluginsConfig.Parallel
@@ -123,8 +166,8 @@ func RunPlugins(oreq *http.Request, rules []Plugin){
 	})
 	defer p.Release()
 
-	for i := range rules {
-		item := &ScanItem{oreq, &rules[i]}
+	for i := range plugins {
+		item := &ScanItem{oreq, &plugins[i]}
 		wg.Add(1)
 		p.Invoke(item)
 	}

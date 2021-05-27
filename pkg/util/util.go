@@ -9,7 +9,7 @@ import (
 )
 
 func Setup() {
-	// fast http client 初始化
+	// fasthttp client 初始化
 	DownProxy := conf2.GlobalConfig.HttpConfig.Proxy
 	client := &fasthttp.Client{
 		// If InsecureSkipVerify is true, TLS accepts any certificate

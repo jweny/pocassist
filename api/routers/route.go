@@ -3,14 +3,16 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jweny/pocassist/api/middleware/jwt"
-	"github.com/jweny/pocassist/api/routers/v1"
+	"github.com/jweny/pocassist/api/routers/v1/auth"
+	"github.com/jweny/pocassist/api/routers/v1/plugin"
+	"github.com/jweny/pocassist/api/routers/v1/vulnerability"
+	"github.com/jweny/pocassist/api/routers/v1/webapp"
 	"github.com/jweny/pocassist/pkg/conf"
 	"net/http"
 )
 
 func Setup() {
 	gin.SetMode(conf.GlobalConfig.ServerConfig.RunMode)
-
 }
 
 
@@ -24,58 +26,64 @@ func InitRouter(port string) {
 	})
 
 	// api
-	router.POST("/api/v1/user/login", v1.GetAuth)
+	router.POST("/api/v1/user/login", auth.Login)
 	pluginRoutes := router.Group("/api/v1/poc")
 	pluginRoutes.Use(jwt.JWT())
 	{
 		// all
-		pluginRoutes.GET("/", v1.GetPlugins)
+		pluginRoutes.GET("/", plugin.Get)
 		// 增
-		pluginRoutes.POST("/", v1.CreatePlugin)
+		pluginRoutes.POST("/", plugin.Add)
 		// 改
-		pluginRoutes.PUT("/:id/", v1.UpdatePlugin)
+		pluginRoutes.PUT("/:id/", plugin.Update)
 		// 详情
-		pluginRoutes.GET("/:id/", v1.GetPlugin)
+		pluginRoutes.GET("/:id/", plugin.Detail)
 		// 删
-		pluginRoutes.DELETE("/:id/", v1.DeletePlugin)
-		// 运行
-		pluginRoutes.POST("/run/", v1.RunPlugin)
+		pluginRoutes.DELETE("/:id/", plugin.Delete)
+		// 测试单个poc
+		pluginRoutes.POST("/run/", plugin.Test)
+		//// 批量测试poc
+		//pluginRoutes.POST("/runs", plugin.RunPlugins)
 	}
 
 	vulRoutes := router.Group("/api/v1/vul")
 	vulRoutes.Use(jwt.JWT())
 	{
 		// basic
-		vulRoutes.GET("/basic/", v1.GetBasic)
+		vulRoutes.GET("/basic/", vulnerability.Basic)
 		// all
-		vulRoutes.GET("/", v1.GetVuls)
+		vulRoutes.GET("/", vulnerability.Get)
 		// 增
-		vulRoutes.POST("/", v1.CreateVul)
+		vulRoutes.POST("/", vulnerability.Create)
 		// 改
-		vulRoutes.PUT("/:id/", v1.UpdateVul)
+		vulRoutes.PUT("/:id/", vulnerability.Update)
 		// 详情
-		vulRoutes.GET("/:id/", v1.GetVul)
+		vulRoutes.GET("/:id/", vulnerability.Detail)
 		// 删
-		vulRoutes.DELETE("/:id/", v1.DeleteVul)
+		vulRoutes.DELETE("/:id/", vulnerability.Delete)
 	}
 
 	appRoutes := router.Group("/api/v1/product")
 	appRoutes.Use(jwt.JWT())
 	{
 		// all
-		appRoutes.GET("/", v1.GetWebApps)
+		appRoutes.GET("/", webapp.Get)
 		// 增
-		appRoutes.POST("/", v1.CreateWebApp)
+		appRoutes.POST("/", webapp.Create)
 	}
-
-
 
 	userRoutes := router.Group("/api/v1/user")
 	userRoutes.Use(jwt.JWT())
 	{
-		userRoutes.POST("/self/resetpwd/", v1.SelfResetPassword)
-		userRoutes.GET("/info", v1.SelfGetInfo)
-		userRoutes.GET("/logout", v1.SelfLogout)
+		userRoutes.POST("/self/resetpwd/", auth.Reset)
+		userRoutes.GET("/info", auth.Self)
+		userRoutes.GET("/logout", auth.Logout)
+	}
+
+	// todo scan add jwt
+	scanRoutes := router.Group("/api/vi/scan")
+	{
+		scanRoutes.POST("")
 	}
 
 	router.Run(":" + port)
