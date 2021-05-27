@@ -8,6 +8,7 @@ import (
 	"github.com/jweny/pocassist/pkg/util"
 	"github.com/jweny/pocassist/poc/rule"
 	"github.com/urfave/cli/v2"
+	"log"
 	"os"
 	"sort"
 )
@@ -18,15 +19,13 @@ var (
 	rawFile		string
 	loadPoc		string
 	condition	string
-	debug		bool
-	dbname		string
 )
 
 func InitAll() {
 	// config 必须最先加载
 	conf2.Setup()
-	logging.Setup(debug)
-	db.Setup(dbname)
+	logging.Setup()
+	db.Setup()
 	routers.Setup()
 	util.Setup()
 	rule.Setup()
@@ -37,21 +36,6 @@ func RunApp() {
 	app.Name = "pocassist"
 	app.Usage = "New POC Framework Without Writing Code"
 	app.Version = "0.3.0"
-	// 全局flag
-	app.Flags = []cli.Flag{
-		&cli.BoolFlag{
-			Name: "debug",
-			Aliases: []string{"d"},
-			Destination: &debug,
-			Value: false,
-			Usage: "enable debug log"},
-		&cli.StringFlag{
-			Name: "database",
-			Aliases: []string{"b"},
-			Destination: &dbname,
-			Value: "sqlite",
-			Usage: "kind of database, default: sqlite"},
-	}
 
 	// 子命令
 	app.Commands = []*cli.Command{
@@ -64,7 +48,7 @@ func RunApp() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		logging.GlobalLogger.Error("[app run err ]", err)
+		log.Fatalf("cli.RunApp err: %v", err)
 		return
 	}
 }

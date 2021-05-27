@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"bytes"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -64,24 +66,59 @@ var GlobalConfig *Config
 
 // 加载配置
 func Setup() {
-	// 加载config
-	var err error
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		log.Fatalf("config.Setup, fail to get current path: %v", err)
+		log.Fatalf("conf.Setup, fail to get current path: %v", err)
 	}
+	// 配置文件路径 当前文件夹 + config.yaml
 	configFile := path.Join(dir, "config.yaml")
-	viper.SetConfigFile(configFile)
-	viper.SetConfigType("yaml")
 
-	err = viper.ReadInConfig()
+	// 检测配置文件是否存在
+	_ , err = os.Lstat(configFile)
 	if err != nil {
-		log.Fatalf("config.Setup, fail to read 'config.yaml': %v", err)
+		//	没有，生成默认yaml
+		WriteYamlConfig(configFile)
+	}
+	// watch配置
+	ReadYamlConfig(configFile)
+
+}
+
+func ReadYamlConfig(configFile string) {
+	// 加载config
+	viper.SetConfigType("yaml")
+	viper.SetConfigFile(configFile)
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("conf.Setup, fail to read 'config.yaml': %v", err)
 	}
 	err = viper.Unmarshal(&GlobalConfig)
 	if err != nil {
-		log.Fatalf("config.Setup, fail to parse 'config.yaml': %v", err)
+		log.Fatalf("conf.Setup, fail to parse 'config.yaml', check format: %v", err)
 	}
+	err = verifiyConfig()
+	if err != nil {
+		log.Fatalf("conf.Setup, fail to verify 'config.yaml', check format: %v", err)
+	}
+	// watch 监控配置文件变化
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		// 配置文件发生变更之后会调用的回调函数
+		log.Println("Config file changed:", e.Name)
+	})
 }
 
-
+func WriteYamlConfig(configFile string) {
+	// 生成默认config
+	viper.SetConfigType("yaml")
+	err := viper.ReadConfig(bytes.NewBuffer(defaultYamlByte))
+	if err != nil {
+		log.Fatalf("conf.Setup, fail to read default config bytes: %v", err)
+	}
+	// 写文件
+	err = viper.SafeWriteConfigAs(configFile)
+	if err != nil {
+		log.Fatalf("conf.Setup, fail to write 'config.yaml': %v", err)
+	}
+}

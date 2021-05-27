@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"bufio"
 	"github.com/astaxie/beego/validation"
 	"github.com/gin-gonic/gin"
 	"github.com/jweny/pocassist/api/msg"
@@ -10,6 +11,13 @@ import (
 	"github.com/jweny/pocassist/poc/rule"
 	"github.com/unknwon/com"
 	"gorm.io/datatypes"
+	"log"
+)
+
+const (
+	TargetUrl = "url"
+	TargetUrlFile = "file"
+	TargetUrlRaw = "raw"
 )
 
 type PluginSerializer struct {
@@ -23,11 +31,19 @@ type PluginSerializer struct {
 	Description   	int            `gorm:"column:description" json:"description"`
 }
 
-type RunPluginSerializer struct {
-	// 运行
-	Target			string		`json:"target"`
+type RunSinglePluginSerializer struct {
+	// 运行单个
+	Target			string		   `json:"target"`
 	Affects         string         `gorm:"column:affects" json:"affects"`
 	JsonPoc         datatypes.JSON `gorm:"column:json_poc" json:"json_poc"`
+}
+
+type RunPluginsSerializer struct {
+	// 批量运行
+	Target			string		`json:"target"`
+	TargetType		string		`json:"target_type"`
+	RunType 		string		`json:"run_type"`
+	VulIdList		[]string	`json:"vul_id_list"`
 }
 
 //获取单个plugin
@@ -137,11 +153,12 @@ func UpdatePlugin(c *gin.Context) {
 	valid.Required(plugin.Affects, "Affects").Message("Affects不能为空")
 
 	if ! valid.HasErrors() {
-		if db.ExistPluginByID(plugin.Id){
+		if db.ExistPluginByVulId(plugin.VulId){
+			c.JSON(msg.ErrResp("漏洞编号已存在"))
+			return
+		} else {
 			db.EditPlugin(plugin.Id, plugin)
 			c.JSON(msg.SuccessResp(plugin))
-		} else {
-			c.JSON(msg.ErrResp("record not found"))
 			return
 		}
 	} else {
@@ -172,9 +189,9 @@ func DeletePlugin(c *gin.Context) {
 	}
 }
 
-//运行
+//运行单个plugin 不是从数据库提取数据，表单传数据
 func RunPlugin(c *gin.Context) {
-	run := RunPluginSerializer{}
+	run := RunSinglePluginSerializer{}
 	err := c.BindJSON(&run)
 	if err != nil {
 		c.JSON(msg.ErrResp("参数校验不通过"))
@@ -195,7 +212,7 @@ func RunPlugin(c *gin.Context) {
 				Affects:       run.Affects,
 				JsonPoc:       poc,
 			}
-			item := &rule.ScanItem{Req: oreq, Vul: &currentPlugin}
+			item := &rule.ScanItem{Req: oreq, Plugin: &currentPlugin}
 			result, err := rule.RunPoc(item)
 			if err != nil {
 				c.JSON(msg.ErrResp("规则运行失败：" + err.Error()))
@@ -209,6 +226,62 @@ func RunPlugin(c *gin.Context) {
 		return
 	}
 }
+
+//批量运行plugin 从数据库提取数据，表单传数据
+//前端向后端传 "vul_id_list":["poc_db_1","poc_db_2"]
+func RunPlugins(c *gin.Context) {
+	runs := RunPluginsSerializer{}
+	err := c.BindJSON(&runs)
+	if err != nil {
+		c.JSON(msg.ErrResp("参数校验不通过"))
+		return
+	}
+	plugins, err := rule.LoadDbPlugin(runs.RunType, runs.VulIdList)
+
+	switch runs.TargetType {
+	case TargetUrl:
+		url := runs.TargetType
+		oreq, err := util.GenOriginalReq(url)
+		if err != nil {
+			logging.GlobalLogger.Error("[original request gen err ]", err)
+			c.JSON(msg.ErrResp("原始请求生成失败"))
+			return
+		}
+		rule.RunPlugins(oreq, plugins)
+	case TargetUrlFile:
+		//获取文件
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			logging.GlobalLogger.Error("[original request gen err ]", err)
+			c.JSON(msg.ErrResp("url文件上传失败"))
+			return
+		}
+		log.Print(header.Filename)
+		//content, err := ioutil.ReadAll(file)
+		var targets []string
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			val := scanner.Text()
+			if val == "" {
+				continue
+			}
+			targets = append(targets, val)
+		}
+
+		for _, url := range targets {
+			oreq, err := util.GenOriginalReq(url)
+			if err != nil {
+				logging.GlobalLogger.Error("[original request gen err ]", err)
+			}
+			logging.GlobalLogger.Info("[start check url ]", url)
+			rule.RunPlugins(oreq, plugins)
+		}
+	case TargetUrlRaw:
+		//请求报文
+	}
+}
+
 
 
 

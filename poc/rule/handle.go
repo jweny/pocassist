@@ -30,8 +30,8 @@ func LimitWait() {
 
 // 限制并发
 type ScanItem struct {
-	Req *http.Request // 原始请求
-	Vul *Plugin       // vul from db
+	Req    *http.Request // 原始请求
+	Plugin *Plugin       // 检测插件
 }
 
 var Handles map[string][]HandlerFunc
@@ -48,15 +48,15 @@ func ExecExpressionHandle(controller *PocController) error {
 		return err
 	}
 	if result {
-		logging.GlobalLogger.Info("[=== find vul===]\n",
-			" [vul_id] ", controller.vulId,
-			" [vul_name] ", controller.poc.Name)
+		logging.GlobalLogger.Info("[=== find vulnerability===]\n",
+			" [plugin_id] ", controller.pluginId,
+			" [plugin_name] ", controller.poc.Name)
 		controller.Abort()
 	}
 
 	logging.GlobalLogger.Info("[=== not vul===]\n",
-		" [vul_id] ", controller.vulId,
-		" [vul_name] ", controller.poc.Name)
+		" [plugin_id] ", controller.pluginId,
+		" [plugin_name] ", controller.poc.Name)
 	return nil
 }
 
@@ -90,13 +90,13 @@ func ExecScriptHandle(controller *PocController) error {
 
 	result, err := scanFunc(args)
 	if err != nil {
-		logging.GlobalLogger.Error("[script scan failed ]", controller.vulId, " err:", err)
+		logging.GlobalLogger.Error("[script scan failed ]", controller.pluginId, " err:", err)
 		return err
 	}
 	logging.GlobalLogger.Info("[script scan finished ]",
-		" [vul_id] ", controller.vulId,
+		" [plugin_id] ", controller.pluginId,
 		" [script_func] ", scanFunc,
-		" [vul_result] ", result)
+		" [result] ", result)
 	return nil
 }
 

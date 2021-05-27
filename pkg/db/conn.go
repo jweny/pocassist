@@ -12,13 +12,11 @@ import (
 
 var GlobalDB *gorm.DB
 
-func Setup(dbname string) {
-	if dbname != "mysql" && dbname != "sqlite" {
-		log.Fatalf("db.Setup err: unsupported database kind. only 'sqlite' or 'mysql'")
-	}
+func Setup() {
 	var err error
 	dbConfig := conf.GlobalConfig.DbConfig
-	if dbname == "mysql" {
+
+	if conf.GlobalConfig.DbConfig.Sqlite == "" {
 		// 配置mysql数据源
 		if dbConfig.Mysql.User == "" ||
 			dbConfig.Mysql.Password == "" ||
@@ -39,8 +37,7 @@ func Setup(dbname string) {
 		if err != nil {
 			log.Fatalf("db.Setup err: %v", err)
 		}
-	}
-	if dbname == "sqlite" {
+	} else {
 		// 配置sqlite数据源
 		if dbConfig.Sqlite == "" {
 			log.Fatalf("db.Setup err: config.yaml sqlite config not set")
@@ -50,6 +47,7 @@ func Setup(dbname string) {
 			log.Fatalf("db.Setup err: %v", err)
 		}
 	}
+
 	if GlobalDB == nil {
 		log.Fatalf("db.Setup err: db connect failed")
 	}

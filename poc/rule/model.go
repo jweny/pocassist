@@ -38,8 +38,8 @@ type Poc struct {
 }
 
 type Plugin struct {
-	VulId         string `gorm:"column:vul_id"`         // 漏洞编号
-	Affects       string `gorm:"column:affects"`        // 影响类型  dir/server/param/url/content
-	JsonPoc       *Poc   `gorm:"column:json_poc"`       // json规则
-	Enable        bool   `gorm:"column:enable"`         // 是否启用
+	VulId   string `gorm:"column:vul_id"` // 漏洞编号
+	Affects string `gorm:"column:affects"`   // 影响类型  dir/server/param/url/content
+	JsonPoc *Poc   `gorm:"column:json_poc"`  // json规则
+	Enable  bool   `gorm:"column:enable"`    // 是否启用
 }

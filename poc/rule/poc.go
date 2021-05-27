@@ -12,27 +12,27 @@ import (
 
 // 执行单个poc
 func RunPoc(inter interface{}) (*util.ScanResult, error) {
-	item := inter.(*ScanItem)
-	originalReq := item.Req
-	vul := item.Vul
+	scanItem := inter.(*ScanItem)
+	originalReq := scanItem.Req
+	plugin := scanItem.Plugin
 
-	if originalReq == nil || vul == nil {
-		return nil, errors.New("no request or no vul")
+	if originalReq == nil || plugin == nil {
+		return nil, errors.New("no request or no plugin")
 	}
 
 	var data []byte
 	if originalReq.Body != nil && originalReq.Body != http.NoBody {
 		data, err := ioutil.ReadAll(originalReq.Body)
 		if err != nil {
-			logging.GlobalLogger.Error("[plugin originalReq data read err ]", vul.VulId)
+			logging.GlobalLogger.Error("[plugin originalReq data read err ]", plugin.VulId)
 			return nil, err
 		}
 		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 	}
-	handles := getHandles(vul.Affects)
-	logging.GlobalLogger.Debug("[plugin running ]" , vul.VulId, " [affects] ", vul.Affects, " [name] ", vul.JsonPoc.Name)
+	handles := getHandles(plugin.Affects)
+	logging.GlobalLogger.Debug("[plugin running ]" , plugin.VulId, " [affects] ", plugin.Affects, " [name] ", plugin.JsonPoc.Name)
 	// 影响为参数类型
-	if vul.Affects == AffectReplaceParameter || vul.Affects == AffectAppendParameter {
+	if plugin.Affects == AffectReplaceParameter || plugin.Affects == AffectAppendParameter {
 		var originalGetParamFields url.Values
 		var replaceHandler ReplaceHandler
 		var err error
@@ -52,29 +52,29 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 			replaceHandler = &ReplacePost{}
 		}
 
-		env, err := GenCelEnv(vul.JsonPoc)
+		env, err := GenCelEnv(plugin.JsonPoc)
 		if err != nil {
-			logging.GlobalLogger.Error("[plugin cel env gen err ]" , vul.VulId)
+			logging.GlobalLogger.Error("[plugin cel env gen err ]" , plugin.VulId)
 			return nil, err
 		}
 		newReq, err := InitNewReq(originalReq)
 		if err != nil {
-			logging.GlobalLogger.Error("[plugin new request init err ]" , vul.VulId)
+			logging.GlobalLogger.Error("[plugin new request init err ]" , plugin.VulId)
 			return nil, err
 		}
-		varMap, err := ParsePocSet(vul.JsonPoc, env, newReq)
+		varMap, err := ParsePocSet(plugin.JsonPoc, env, newReq)
 		if err != nil {
 			util.RequestPut(newReq)
-			logging.GlobalLogger.Error("[plugin poc set parse err ]", vul.VulId, err)
+			logging.GlobalLogger.Error("[plugin poc set parse err ]", plugin.VulId, err)
 			return nil, err
 		}
 		for field := range originalGetParamFields {
-			for _, value := range vul.JsonPoc.Params {
+			for _, value := range plugin.JsonPoc.Params {
 				// 限速
 				LimitWait()
 				logging.GlobalLogger.Debug("[current param]", value)
 
-				controller := InitPocController(originalReq, vul.JsonPoc, vul.Affects, data)
+				controller := InitPocController(originalReq, plugin.JsonPoc, plugin.Affects, data)
 				controller.celEnv = env
 				controller.varMap = varMap
 				controller.Handles = handles
@@ -90,8 +90,8 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 					controller.Reset()
 					util.RequestPut(newReq)
 					logging.GlobalLogger.Info("[plugin result ]\n",
-						" [vul_id] ", vul.VulId,
-						" [vul_name] ", vul.JsonPoc.Name,
+						" [plugin_id] ", plugin.VulId,
+						" [plugin_name] ", plugin.JsonPoc.Name,
 						" [param] ", value)
 
 					return util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList), nil
@@ -103,29 +103,29 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 
 	} else {
 		// 其他类型
-		env, err := GenCelEnv(vul.JsonPoc)
+		env, err := GenCelEnv(plugin.JsonPoc)
 		if err != nil {
-			logging.GlobalLogger.Error("[plugin cel env gen err ]" , vul.VulId)
+			logging.GlobalLogger.Error("[plugin cel env gen err ]" , plugin.VulId)
 			return nil, err
 		}
 		newReq, err := InitNewReq(originalReq)
 		if err != nil {
-			logging.GlobalLogger.Error("[plugin new request init err ]" , vul.VulId)
+			logging.GlobalLogger.Error("[plugin new request init err ]" , plugin.VulId)
 			return nil, err
 		}
-		varMap, err := ParsePocSet(vul.JsonPoc, env, newReq)
+		varMap, err := ParsePocSet(plugin.JsonPoc, env, newReq)
 		if err != nil {
 			util.RequestPut(newReq)
-			logging.GlobalLogger.Error("plugin poc set parse err ]", vul.VulId, err)
+			logging.GlobalLogger.Error("plugin poc set parse err ]", plugin.VulId, err)
 			return nil, err
 		}
 		// 限速
 		LimitWait()
-		controller := InitPocController(originalReq, vul.JsonPoc, vul.Affects, data)
+		controller := InitPocController(originalReq, plugin.JsonPoc, plugin.Affects, data)
 		controller.celEnv = env
 		controller.varMap = varMap
 		controller.Handles = handles
-		controller.vulId = vul.VulId
+		controller.pluginId = plugin.VulId
 
 		err = controller.Next()
 		if err != nil {
@@ -135,9 +135,9 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		if controller.IsAborted() {
 			result := util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList)
 			logging.GlobalLogger.Info("[plugin scan result ]\n",
-				" [vul_id] ", vul.VulId,
-				" [vul_name] ", vul.JsonPoc.Name,
-				" [vul_result] ", result)
+				" [plugin_id] ", plugin.VulId,
+				" [plugin_name] ", plugin.JsonPoc.Name,
+				" [plugin_result] ", result)
 			return result, nil
 		}
 		controller.Reset()

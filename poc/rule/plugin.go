@@ -2,6 +2,7 @@ package rule
 
 import (
 	"encoding/json"
+	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/panjf2000/ants/v2"
@@ -114,9 +115,9 @@ func LoadPlugins(loadType string, conditions string) ([]Plugin, error) {
 func RunPlugins(oreq *http.Request, rules []Plugin){
 	// 并发限制
 	var wg sync.WaitGroup
-	//parallel := conf.GlobalConfig.PluginsConfig.Parallel
+	parallel := conf.GlobalConfig.PluginsConfig.Parallel
 
-	p, _ := ants.NewPoolWithFunc(10, func(item interface{}) {
+	p, _ := ants.NewPoolWithFunc(parallel, func(item interface{}) {
 		RunPoc(item)
 		wg.Done()
 	})

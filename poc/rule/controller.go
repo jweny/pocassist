@@ -27,7 +27,7 @@ var ControllerPool = sync.Pool{
 }
 
 type PocController struct {
-	vulId       string
+	pluginId    string
 	originalReq *http.Request          // 原始请求  --> 初始条件
 	poc         *Poc                   // 加载的poc --> 初始条件
 	NewReq      *proto.Request         // 生成的新请求
@@ -73,7 +73,7 @@ func (controller *PocController) Reset() {
 	controller.poc = nil
 	controller.celEnv = nil
 	controller.NewReq = nil
-	controller.vulId = ""
+	controller.pluginId = ""
 	return
 }
 

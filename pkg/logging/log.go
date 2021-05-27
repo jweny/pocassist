@@ -14,7 +14,13 @@ import (
 
 var GlobalLogger *logrus.Logger
 
-func Setup(debug bool) {
+func Setup() {
+	var debug = false
+
+	if conf2.GlobalConfig.ServerConfig.RunMode == "debug" {
+		debug = true
+	}
+
 	logName := conf2.GlobalConfig.ServerConfig.LogName
 	if logName == "" {
 		logName = "debug.log"
