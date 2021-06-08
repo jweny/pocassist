@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/valyala/fasthttp"
@@ -55,37 +54,30 @@ type RespFormat struct {
 func (r *ReqFormat) FormatContent() string {
 	reqRaw := formatPool.Get().(*FormatString)
 	defer formatPut(reqRaw)
-	reqRaw.Header = r.Req.Header.String()
+	header := r.Req.Header.String()
+	body := ""
 	if len(r.Req.Body()) > 0 {
-		reqRaw.Body = string(r.Req.Body())
+		body = string(r.Req.Body())
 	}
-	reqContent, err := json.Marshal(reqRaw)
-	if err != nil {
-		return ""
-	}
-	return string(reqContent)
+	return header + body
 }
 
 func (r *RespFormat) FormatContent() string {
 	respRaw := formatPool.Get().(*FormatString)
 	defer formatPut(respRaw)
-	respRaw.Header = r.Resp.Header.String()
+	header := r.Resp.Header.String()
+	body := ""
 	if len(r.Resp.Body()) > 0 {
-		respRaw.Body = string(r.Resp.Body())
+		body = string(r.Resp.Body())
 	}
-	respContent, err := json.Marshal(respRaw)
-	if err != nil {
-		return ""
-	}
-	return string(respContent)
+	return header + body
 }
 
 func formatPut(f *FormatString) {
 	if f == nil {
 		return
 	}
-	f.Header = ""
-	f.Body = ""
+	f.Raw = ""
 	formatPool.Put(f)
 }
 
@@ -144,12 +136,15 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	headerContent := originalResp.Header.String()
 	headers := strings.Split(headerContent, "\r\n")
 	for _, v := range headers {
-		values := strings.Split(v, ":")
+		// 修复bug: 限制切割次数
+		values := strings.SplitN(v, ":", 2)
 		if len(values) != 2 {
 			continue
 		}
-		k := values[0]
-		v := values[1]
+		// 修复bug 所有响应头 key 均转为小写（与xray兼容）
+		k := strings.ToLower(values[0])
+		// 修复bug 所有响应头 value去除左边空格
+		v := strings.TrimLeft(values[1]," ")
 		header[k] = v
 	}
 	resp.Headers = header

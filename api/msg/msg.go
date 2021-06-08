@@ -1,7 +1,6 @@
 package msg
 
 import (
-	"github.com/astaxie/beego/validation"
 	"net/http"
 )
 
@@ -37,11 +36,4 @@ func SuccessResp(data interface{}) (int,Response) {
 	return http.StatusOK, res
 }
 
-func DealValidError(valid validation.Validation) string {
-	errStr := "参数校验不通过:"
-	for _, err := range valid.Errors {
-		errStr += err.Message + ";"
-	}
-	return errStr
-}
 

@@ -13,9 +13,13 @@ type ScanResult struct {
 	RespMsg    []string `json:"resp_msg"`// 响应列表
 }
 
+//type FormatString struct {
+//	Header string `json:"header"`
+//	Body   string `json:"body"`
+//}
+
 type FormatString struct {
-	Header string `json:"header"`
-	Body   string `json:"body"`
+	Raw string `json:"raw"`
 }
 
 // 没漏洞时返回的结果

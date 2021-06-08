@@ -1,0 +1,831 @@
+definitions:
+  auth.Auth:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  auth.ResetPwd:
+    properties:
+      newpassword:
+        type: string
+      password:
+        type: string
+    required:
+    - newpassword
+    - password
+    type: object
+  db.Vulnerability:
+    properties:
+      category:
+        type: string
+      cnnvd:
+        type: string
+      cve:
+        type: string
+      description:
+        type: string
+      foreignWebapp:
+        $ref: '#/definitions/db.Webapp'
+      id:
+        description: gorm.Model
+        type: integer
+      language:
+        type: string
+      name_zh:
+        type: string
+      severity:
+        type: string
+      suggestion:
+        type: string
+      webapp:
+        type: integer
+    required:
+    - name_zh
+    type: object
+  db.Webapp:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      provider:
+        type: string
+      remarks:
+        type: string
+    type: object
+  msg.Response:
+    properties:
+      code:
+        type: integer
+      data:
+        type: object
+      error:
+        type: string
+    type: object
+  plugin.DownloadSwigger:
+    properties:
+      json_poc:
+        $ref: '#/definitions/rule.Plugin'
+    type: object
+  plugin.RunSwigger:
+    properties:
+      affects:
+        type: string
+      json_poc:
+        $ref: '#/definitions/rule.Plugin'
+      target:
+        type: string
+      vul_id:
+        type: string
+    type: object
+  rule.Detail:
+    properties:
+      author:
+        type: string
+      description:
+        type: string
+      links:
+        items:
+          type: string
+        type: array
+      version:
+        type: string
+    type: object
+  rule.Plugin:
+    properties:
+      affects:
+        description: 影响类型  dir/server/param/url/content
+        type: string
+      enable:
+        description: 是否启用
+        type: boolean
+      jsonPoc:
+        $ref: '#/definitions/rule.Poc'
+        description: json规则
+      vulId:
+        description: 漏洞编号
+        type: string
+    type: object
+  rule.Poc:
+    properties:
+      detail:
+        $ref: '#/definitions/rule.Detail'
+      groups:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/rule.Rule'
+          type: array
+        type: object
+      name:
+        type: string
+      params:
+        items:
+          type: string
+        type: array
+      rules:
+        items:
+          $ref: '#/definitions/rule.Rule'
+        type: array
+      set:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  rule.Rule:
+    properties:
+      body:
+        type: string
+      expression:
+        type: string
+      follow_redirects:
+        type: boolean
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      path:
+        type: string
+      search:
+        type: string
+    type: object
+  scan.scanSerializer:
+    properties:
+      remarks:
+        type: string
+      target:
+        description: 单个url
+        type: string
+      type:
+        description: multi or all
+        type: string
+      vul_list:
+        items:
+          type: string
+        type: array
+    required:
+    - target
+    - type
+    type: object
+info:
+  contact: {}
+  description: Pocassist Api
+  title: Pocassist Api
+  version: v0.4.0
+paths:
+  /api/v1/poc/:
+    get:
+      description: 列表
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Pagesize
+        in: query
+        name: pagesize
+        required: true
+        type: integer
+      - in: query
+        name: affectsField
+        type: string
+      - in: query
+        name: enableField
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin list
+      tags:
+      - Plugin
+    post:
+      description: 新增
+      parameters:
+      - description: plugin
+        in: body
+        name: plugin
+        required: true
+        schema:
+          $ref: '#/definitions/rule.Plugin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin add
+      tags:
+      - Plugin
+  /api/v1/poc/{id}/:
+    delete:
+      description: 删除
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin delete
+      tags:
+      - Plugin
+    get:
+      description: 详情
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin detail
+      tags:
+      - Plugin
+    put:
+      description: 更新
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: plugin
+        in: body
+        name: plugin
+        required: true
+        schema:
+          $ref: '#/definitions/rule.Plugin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin update
+      tags:
+      - Plugin
+  /api/v1/poc/download/:
+    post:
+      description: 下载yaml
+      parameters:
+      - description: json_poc
+        in: body
+        name: run
+        required: true
+        schema:
+          $ref: '#/definitions/plugin.DownloadSwigger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: download yaml
+      tags:
+      - Plugin
+  /api/v1/poc/run/:
+    post:
+      description: 运行
+      parameters:
+      - description: run
+        in: body
+        name: run
+        schema:
+          $ref: '#/definitions/plugin.RunSwigger'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: plugin run
+      tags:
+      - Plugin
+  /api/v1/poc/upload/:
+    post:
+      consumes:
+      - multipart/form-data
+      - application/json
+      description: 上传yaml
+      parameters:
+      - description: file
+        in: formData
+        name: yaml
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: upload yaml
+      tags:
+      - Plugin
+  /api/v1/product/:
+    get:
+      description: 列表
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Pagesize
+        in: query
+        name: pagesize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: product list
+      tags:
+      - Product
+    post:
+      description: 新增
+      parameters:
+      - description: plugin
+        in: body
+        name: plugin
+        required: true
+        schema:
+          $ref: '#/definitions/rule.Plugin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: product add
+      tags:
+      - Product
+  /api/v1/result/:
+    get:
+      description: 列表
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Pagesize
+        in: query
+        name: pagesize
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: taskField
+        type: integer
+      - in: query
+        name: vulField
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: result list
+      tags:
+      - Result
+  /api/v1/result/{id}/:
+    delete:
+      description: 删除
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: result delete
+      tags:
+      - Result
+  /api/v1/scan/list:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 传文件：url列表
+      parameters:
+      - description: 扫描类型：multi / all
+        in: formData
+        name: type
+        required: true
+        type: string
+      - in: formData
+        items:
+          type: string
+        name: vul_list
+        type: array
+      - description: 备注
+        in: formData
+        name: remarks
+        type: string
+      - description: file
+        in: formData
+        name: target
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      summary: scan list
+      tags:
+      - Scan
+  /api/v1/scan/raw:
+    post:
+      consumes:
+      - multipart/form-data
+      - application/json
+      description: 传文件：请求报文
+      parameters:
+      - description: 扫描类型：multi / all
+        in: formData
+        name: type
+        required: true
+        type: string
+      - in: formData
+        items:
+          type: string
+        name: vul_list
+        type: array
+      - description: 备注
+        in: formData
+        name: remarks
+        type: string
+      - description: file
+        in: formData
+        name: target
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      summary: scan raw
+      tags:
+      - Scan
+  /api/v1/scan/url:
+    post:
+      consumes:
+      - application/json
+      description: 扫描单个url
+      parameters:
+      - description: 扫描参数
+        in: body
+        name: scan
+        required: true
+        schema:
+          $ref: '#/definitions/scan.scanSerializer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      summary: scan url
+      tags:
+      - Scan
+  /api/v1/self/resetpwd/:
+    post:
+      consumes:
+      - application/json
+      description: 重置密码
+      parameters:
+      - description: 旧/新密码
+        in: body
+        name: resetpwd
+        required: true
+        schema:
+          $ref: '#/definitions/auth.ResetPwd'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      summary: Reset Password
+      tags:
+      - User
+  /api/v1/task/:
+    get:
+      description: 列表
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Pagesize
+        in: query
+        name: pagesize
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: task list
+      tags:
+      - Task
+  /api/v1/task/{id}/:
+    delete:
+      description: 删除
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: task delete
+      tags:
+      - Task
+  /api/v1/user/info:
+    get:
+      description: 获取个人信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: Self
+      tags:
+      - User
+  /api/v1/user/login:
+    post:
+      consumes:
+      - application/json
+      description: 登录
+      parameters:
+      - description: 用户/密码
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/auth.Auth'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      summary: Login
+      tags:
+      - User
+  /api/v1/user/logout:
+    get:
+      description: 登出
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: Logout
+      tags:
+      - User
+  /api/v1/vul/:
+    get:
+      description: 列表
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Pagesize
+        in: query
+        name: pagesize
+        required: true
+        type: integer
+      - in: query
+        name: categoryField
+        type: string
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: webappField
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul list
+      tags:
+      - Vul
+    post:
+      description: 新增
+      parameters:
+      - description: vul
+        in: body
+        name: vul
+        required: true
+        schema:
+          $ref: '#/definitions/db.Vulnerability'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul add
+      tags:
+      - Vul
+  /api/v1/vul/{id}/:
+    delete:
+      description: 删除
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul delete
+      tags:
+      - Vul
+    get:
+      description: 详情
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul detail
+      tags:
+      - Vul
+    put:
+      description: 更新
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: vul
+        in: body
+        name: vul
+        required: true
+        schema:
+          $ref: '#/definitions/db.Vulnerability'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul update
+      tags:
+      - Vul
+  /api/v1/vul/basic/:
+    get:
+      description: 前端需要的基础信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: vul basic
+      tags:
+      - Vul
+securityDefinitions:
+  token:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

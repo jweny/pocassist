@@ -51,7 +51,7 @@ func Setup() {
 		log.Fatalf("db.Setup err: db connect failed")
 	}
 
-	err = GlobalDB.AutoMigrate(&Auth{}, &Vulnerability{}, &Webapp{},&Plugin{},)
+	err = GlobalDB.AutoMigrate(&Auth{}, &Vulnerability{}, &Webapp{}, &Plugin{}, &Task{}, &Result{})
 
 	if err != nil {
 		log.Fatalf("db.Setup err: %v", err)

@@ -7,7 +7,16 @@ import (
 	"github.com/unknwon/com"
 )
 
-//获取 webapp
+// @Summary product list
+// @Tags Product
+// @Description 列表
+// @Produce  json
+// @Security token
+// @Param page query int true "Page"
+// @Param pagesize query int true "Pagesize"
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/product/ [get]
 func Get(c *gin.Context) {
 	data := make(map[string]interface{})
 	// 分页
@@ -22,8 +31,16 @@ func Get(c *gin.Context) {
 	return
 }
 
-//新增
-func Create(c *gin.Context) {
+// @Summary product add
+// @Tags Product
+// @Description 新增
+// @Produce  json
+// @Security token
+// @Param plugin body rule.Plugin true "plugin"
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/product/ [post]
+func Add(c *gin.Context) {
 	app := db.Webapp{}
 	err := c.BindJSON(&app)
 	if err != nil {

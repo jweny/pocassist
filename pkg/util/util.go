@@ -6,6 +6,7 @@ import (
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
+	"log"
 )
 
 func Setup() {
@@ -18,6 +19,7 @@ func Setup() {
 		DisablePathNormalizing:   true,
 	}
 	if DownProxy != "" {
+		log.Println("use proxy", DownProxy)
 		logging.GlobalLogger.Debug("[fasthttp client use proxy ]", DownProxy)
 		client.Dial = fasthttpproxy.FasthttpHTTPDialer(DownProxy)
 	}

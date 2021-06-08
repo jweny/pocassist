@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jweny/pocassist/pkg/conf"
+	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/poc/scripts"
 	"golang.org/x/time/rate"
@@ -32,6 +33,7 @@ func LimitWait() {
 type ScanItem struct {
 	Req    *http.Request // 原始请求
 	Plugin *Plugin       // 检测插件
+	Task   *db.Task		 // 所属任务
 }
 
 var Handles map[string][]HandlerFunc

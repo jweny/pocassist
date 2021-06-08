@@ -2,6 +2,7 @@ package conf
 
 import (
 	"bytes"
+	"github.com/jweny/pocassist/pkg/file"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -71,11 +72,8 @@ func Setup() {
 	}
 	// 配置文件路径 当前文件夹 + config.yaml
 	configFile := path.Join(dir, "config.yaml")
-
 	// 检测配置文件是否存在
-	_ , err = os.Lstat(configFile)
-	if err != nil {
-		//	没有，生成默认yaml
+	if !file.Exists(configFile) {
 		WriteYamlConfig(configFile)
 	}
 	ReadYamlConfig(configFile)

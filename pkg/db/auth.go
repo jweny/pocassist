@@ -1,8 +1,11 @@
 package db
 
+import "gorm.io/gorm"
+
 // auths 表
 
 type Auth struct {
+	gorm.Model
 	Id       int    `gorm:"primary_key" json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`

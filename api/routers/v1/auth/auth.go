@@ -7,21 +7,30 @@ import (
 	"github.com/jweny/pocassist/pkg/util"
 )
 
-type auth struct {
-	Username string `valid:"Required; MaxSize(50)"`
-	Password string `valid:"Required; MaxSize(50)"`
+type Auth struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type ResetPwd struct {
-	Password    string `json:"password"`
-	NewPassword string `json:"newpassword"`
+	Password    string `json:"password" binding:"required"`
+	NewPassword string `json:"newpassword" binding:"required"`
 }
 
+// @Summary Login
+// @Tags User
+// @Description 登录
+// @accept json
+// @Produce  json
+// @Param auth body Auth true "用户/密码"
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/user/login [post]
 func Login(c *gin.Context) {
-	login := auth{}
-	err := c.BindJSON(&login)
+	login := Auth{}
+	err := c.ShouldBindJSON(&login)
 	if err != nil {
-		c.JSON(msg.ErrResp("参数校验不通过"))
+		c.JSON(msg.ErrResp("用户名密码不可为空"))
 		return
 	}
 
@@ -48,11 +57,20 @@ func Login(c *gin.Context) {
 	}
 }
 
+// @Summary Reset Password
+// @Tags User
+// @Description 重置密码
+// @accept json
+// @Produce  json
+// @Param resetpwd body ResetPwd true "旧/新密码"
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/self/resetpwd/ [post]
 func Reset(c *gin.Context) {
 	resetPwd := ResetPwd{}
-	err := c.BindJSON(&resetPwd)
+	err := c.ShouldBindJSON(&resetPwd)
 	if err != nil {
-		c.JSON(msg.ErrResp("参数校验不通过"))
+		c.JSON(msg.ErrResp("原密码、新密码不可为空"))
 		return
 	}
 	token := c.Request.Header.Get("Authorization")
@@ -71,6 +89,14 @@ func Reset(c *gin.Context) {
 	}
 }
 
+// @Summary Self
+// @Tags User
+// @Description 获取个人信息
+// @Produce  json
+// @Security token
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/user/info [get]
 func Self(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	claims, err := util.ParseToken(token)
@@ -84,6 +110,14 @@ func Self(c *gin.Context) {
 	return
 }
 
+// @Summary Logout
+// @Tags User
+// @Description 登出
+// @Produce  json
+// @Security token
+// @Success 200 {object} msg.Response
+// @Failure 200 {object} msg.Response
+// @Router /api/v1/user/logout [get]
 func Logout(c *gin.Context) {
 	// 后端伪登出 todo:优化jwt
 	c.JSON(msg.SuccessResp("登出成功"))

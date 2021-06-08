@@ -5,13 +5,14 @@ import (
 	"errors"
 )
 
+// todo 改回 release
 var defaultYamlByte = []byte(`
 # webserver配置
 serverConfig:
   # 配置jwt秘钥
   jwt_secret: "pocassist"
   # gin的运行模式 "release" 或者 "debug"
-  run_mode: "release"
+  run_mode: "debug"
   # 运行日志的文件名，日志将保存在二进制所在目录
   log_name : "debug.log"
 

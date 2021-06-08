@@ -1,7 +1,10 @@
 package db
 
 import (
+	"errors"
 	"gorm.io/datatypes"
+	"strconv"
+	"strings"
 )
 
 // plugins 表
@@ -9,7 +12,7 @@ import (
 type Plugin struct {
 	Id            int            `gorm:"primary_key" json:"id"`
 	VulId         string         `gorm:"column:vul_id" json:"vul_id"`
-	Affects       string         `gorm:"column:affects" json:"affects"`
+	Affects       string         `gorm:"column:affects" json:"affects" binding:"required"`
 	JsonPoc       datatypes.JSON `gorm:"column:json_poc" json:"json_poc"`
 	Enable        bool           `gorm:"column:enable" json:"enable"`
 	Desc          int            `gorm:"column:description" json:"description"`
@@ -18,7 +21,7 @@ type Plugin struct {
 
 type PluginSearchField struct {
 	Search       string
-	EnableField  int
+	EnableField  int		`binding:"oneof=0 1"`
 	AffectsField string
 }
 
@@ -57,7 +60,7 @@ func GetPlugins(page int, pageSize int, field *PluginSearchField) (plugins []Plu
 	}
 	//	分页
 	if page > 0 && pageSize > 0 {
-		db = db.Offset((page - 1) * pageSize).Limit(pageSize).Find(&plugins)
+		db = db.Offset((page - 1) * pageSize).Order("vul_id desc").Limit(pageSize).Find(&plugins)
 	}
 	return
 }
@@ -100,3 +103,18 @@ func ExistPluginByVulId(vul_id string) bool {
 	return false
 }
 
+func GenPluginVulId() (string,error) {
+	var plugin Plugin
+	GlobalDB.Model(&Plugin{}).Order("vul_id desc").Limit(1).Select("vul_id").First(&plugin)
+	bigVulId := plugin.VulId
+	splitList := strings.Split(bigVulId,"-")
+	if len(splitList) != 2 {
+		return "", errors.New("数据库 plugin vul_id 格式不正确")
+	}
+	idNum, err := strconv.Atoi(splitList[1])
+	if err != nil {
+		return "", err
+	}
+	newVulId := splitList[0] + "-" + strconv.Itoa(idNum+1)
+	return newVulId, nil
+}

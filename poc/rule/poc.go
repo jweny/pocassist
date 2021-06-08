@@ -2,7 +2,9 @@ package rule
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
 	"io/ioutil"
@@ -10,28 +12,91 @@ import (
 	"net/url"
 )
 
+func GetOriginalReqBody(originalReq *http.Request) ([]byte, error){
+	var data []byte
+	if originalReq.Body != nil && originalReq.Body != http.NoBody {
+		data, err := ioutil.ReadAll(originalReq.Body)
+		if err != nil {
+			return nil, err
+		}
+		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	}
+	return data, nil
+}
+
+func WriteVulResult(scanItem *ScanItem, output string, result *util.ScanResult){
+	vulnerable := false
+	if result != nil {
+		vulnerable = result.Vulnerable
+	}
+
+	logging.GlobalLogger.Info(
+		"[plugin scan result]",
+		" [exist vul] ", vulnerable,
+		" [plugin_id] ", scanItem.Plugin.VulId,
+		" [plugin_name] ", scanItem.Plugin.JsonPoc.Name,
+		" [output] ", output,
+		" [detail] ", result)
+	// todo 将存结果 封装一层方法
+	detail, _:= json.Marshal(result)
+
+	res := db.Result{
+		Detail:   detail,
+		PluginId:  scanItem.Plugin.VulId,
+		PluginName:	scanItem.Plugin.JsonPoc.Name,
+		Vul:	vulnerable,
+		TaskId: scanItem.Task.Id,
+	}
+	db.AddResult(res)
+}
+
+func WriteTaskError(errMsg string, taskId int) {
+	logging.GlobalLogger.Error("[RunPoc]" + errMsg)
+	// 修改task状态
+	db.ErrorTask(taskId)
+}
+
 // 执行单个poc
 func RunPoc(inter interface{}) (*util.ScanResult, error) {
 	scanItem := inter.(*ScanItem)
 	originalReq := scanItem.Req
 	plugin := scanItem.Plugin
+	task := scanItem.Task
 
 	if originalReq == nil || plugin == nil {
+		WriteTaskError("no request or no plugin", task.Id)
 		return nil, errors.New("no request or no plugin")
 	}
 
-	var data []byte
-	if originalReq.Body != nil && originalReq.Body != http.NoBody {
-		data, err := ioutil.ReadAll(originalReq.Body)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin originalReq data read err ]", plugin.VulId)
-			return nil, err
-		}
-		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	data, err := GetOriginalReqBody(originalReq)
+	if err != nil {
+		WriteTaskError("original request body get err", task.Id)
+		return nil, err
 	}
+
 	handles := getHandles(plugin.Affects)
 	logging.GlobalLogger.Debug("[plugin running ]" , plugin.VulId, " [affects] ", plugin.Affects, " [name] ", plugin.JsonPoc.Name)
-	// 影响为参数类型
+
+	// =========================
+	env, err := GenCelEnv(plugin.JsonPoc)
+	if err != nil {
+		WriteTaskError("cel env gen err", task.Id)
+		return nil, err
+	}
+	newReq, err := InitNewReq(originalReq)
+	if err != nil {
+		WriteTaskError("new request init err", task.Id)
+		return nil, err
+	}
+	varMap, err := ParsePocSet(plugin.JsonPoc, env, newReq)
+	if err != nil {
+		util.RequestPut(newReq)
+		WriteTaskError("poc set parse err", task.Id)
+		return nil, err
+	}
+	// ===========================
+
+	// 影响为参数类型  需要替换参数
 	if plugin.Affects == AffectReplaceParameter || plugin.Affects == AffectAppendParameter {
 		var originalGetParamFields url.Values
 		var replaceHandler ReplaceHandler
@@ -39,35 +104,19 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		if originalReq.Method == "GET" {
 			originalGetParamFields, err = url.ParseQuery(originalReq.URL.RawQuery)
 			if err != nil {
-				logging.GlobalLogger.Error("[plugin originalReqGET url parse err ]", err)
+				WriteTaskError("originalReqGET url parse err", task.Id)
 				return nil, err
 			}
 			replaceHandler = &ReplaceGet{}
 		} else if originalReq.Method == "POST" {
 			originalGetParamFields, err = url.ParseQuery(string(data))
 			if err != nil {
-				logging.GlobalLogger.Error("[plugin originalReqPost url parse err ]", err)
+				WriteTaskError("originalReqPost url parse err", task.Id)
 				return nil, err
 			}
 			replaceHandler = &ReplacePost{}
 		}
 
-		env, err := GenCelEnv(plugin.JsonPoc)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin cel env gen err ]" , plugin.VulId)
-			return nil, err
-		}
-		newReq, err := InitNewReq(originalReq)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin new request init err ]" , plugin.VulId)
-			return nil, err
-		}
-		varMap, err := ParsePocSet(plugin.JsonPoc, env, newReq)
-		if err != nil {
-			util.RequestPut(newReq)
-			logging.GlobalLogger.Error("[plugin poc set parse err ]", plugin.VulId, err)
-			return nil, err
-		}
 		for field := range originalGetParamFields {
 			for _, value := range plugin.JsonPoc.Params {
 				// 限速
@@ -87,38 +136,23 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 				}
 
 				if controller.IsAborted() {
-					controller.Reset()
+					result := util.VulnerableHttpResult(controller.originalReq.URL.String(),value, controller.respList)
+					// todo 写库
+					WriteVulResult(scanItem, value, result)
+					// 修改task状态
+					db.DownTask(scanItem.Task.Id)
 					util.RequestPut(newReq)
-					logging.GlobalLogger.Info("[plugin result ]\n",
-						" [plugin_id] ", plugin.VulId,
-						" [plugin_name] ", plugin.JsonPoc.Name,
-						" [param] ", value)
-
-					return util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList), nil
+					controller.Reset()
+					return result, nil
 				}
+				WriteVulResult(scanItem, "", nil)
 				controller.Reset()
 				util.RequestPut(newReq)
 			}
 		}
 
 	} else {
-		// 其他类型
-		env, err := GenCelEnv(plugin.JsonPoc)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin cel env gen err ]" , plugin.VulId)
-			return nil, err
-		}
-		newReq, err := InitNewReq(originalReq)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin new request init err ]" , plugin.VulId)
-			return nil, err
-		}
-		varMap, err := ParsePocSet(plugin.JsonPoc, env, newReq)
-		if err != nil {
-			util.RequestPut(newReq)
-			logging.GlobalLogger.Error("plugin poc set parse err ]", plugin.VulId, err)
-			return nil, err
-		}
+		// 影响为其他类型
 		// 限速
 		LimitWait()
 		controller := InitPocController(originalReq, plugin.JsonPoc, plugin.Affects, data)
@@ -133,15 +167,21 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		}
 
 		if controller.IsAborted() {
+			// todo 写库
 			result := util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList)
-			logging.GlobalLogger.Info("[plugin scan result ]\n",
-				" [plugin_id] ", plugin.VulId,
-				" [plugin_name] ", plugin.JsonPoc.Name,
-				" [plugin_result] ", result)
+			// todo 写库
+			WriteVulResult(scanItem, "", result)
+			util.RequestPut(newReq)
+			// 修改task状态
+			db.DownTask(scanItem.Task.Id)
+			controller.Reset()
 			return result, nil
 		}
+		WriteVulResult(scanItem, "", nil)
 		controller.Reset()
 		util.RequestPut(newReq)
 	}
+	// 修改task状态
+	db.DownTask(scanItem.Task.Id)
 	return &util.InVulnerableResult, nil
 }
