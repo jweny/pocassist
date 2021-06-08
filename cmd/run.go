@@ -15,15 +15,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
-)
-
-var (
-	url			string
-	urlFile		string
-	rawFile		string
-	loadPoc		string
-	condition	string
 )
 
 func init() {
@@ -73,14 +64,16 @@ func RunApp() {
 	app.Usage = "New POC Framework Without Writing Code"
 	app.Version = "0.3.0"
 
-	// 子命令
-	app.Commands = []*cli.Command{
-		&subCommandCli,
-		&subCommandServer,
+	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			// 后端端口
+			Name:  "port",
+			Aliases: []string{"p"},
+			Value: "1231",
+			Usage: "web server `PORT`",
+		},
 	}
-
-	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Sort(cli.CommandsByName(app.Commands))
+	app.Action = RunServer
 
 	err := app.Run(os.Args)
 	if err != nil {
@@ -88,3 +81,12 @@ func RunApp() {
 		return
 	}
 }
+
+func RunServer(c *cli.Context) error {
+	InitAll()
+	HotConf()
+	port := c.String("port")
+	routers.InitRouter(port)
+	return nil
+}
+
