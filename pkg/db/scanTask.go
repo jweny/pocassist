@@ -1,9 +1,5 @@
 package db
 
-import (
-	"gorm.io/gorm"
-)
-
 const TaskStatusRunning  = "running"
 const TaskStatusDown  = "down"
 const TaskStatusError  = "error"
@@ -11,13 +7,13 @@ const TaskStatusError  = "error"
 // task表
 
 type Task struct {
-	gorm.Model
+	//gorm.Model
 	Id            int            `gorm:"primary_key" json:"id"`
 	Remarks       string      	 `gorm:"column:remarks" json:"remarks"`
-	Target   	  string    	 `gorm:"type:longtext" json:"Target"`
+	Target   	  string    	 `gorm:"type:longtext" json:"target"`
 	Operator	  string		 `gorm:"type:string" json:"operator"`
 	Status        string		 `gorm:"type:string" json:"status"`
-	Results		  []Result		 `gorm:"foreignKey:TaskId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Results		  []Result		 `gorm:"foreignKey:TaskId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"results"`
 }
 
 func AddTask(task *Task) bool {
@@ -66,7 +62,7 @@ func GetTask(page int, pageSize int, field *TaskSearchField) (tasks []Task) {
 }
 
 func DeleteTask(id int) bool {
-	GlobalDB.Model(&Task{}).Where("id = ?", id).Delete(Task{})
+	GlobalDB.Model(&Task{}).Where("id = ?", id).Delete(&Task{})
 	return true
 }
 

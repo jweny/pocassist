@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/valyala/fasthttp"
@@ -51,17 +52,42 @@ type RespFormat struct {
 	Resp *fasthttp.Response
 }
 
+// Return value if nonempty, def otherwise.
+func valueOrDefault(value, def string) string {
+	if value != "" {
+		return value
+	}
+	return def
+}
+
+// dump 请求报文
 func (r *ReqFormat) FormatContent() string {
 	reqRaw := formatPool.Get().(*FormatString)
 	defer formatPut(reqRaw)
-	header := r.Req.Header.String()
+	req := r.Req
+	if req == nil {
+		return ""
+	}
+	// fasthttp 请求打印的第一行长这样
+	// GET http://jweny.top/ HTTP/1.1
+	// 处理下
+	tmpList := strings.SplitN(string(req.Header.Header()), "\r\n",2)
+
+	reqURI := req.URI().RequestURI()
+	protocol := string(req.Header.Protocol())
 	body := ""
 	if len(r.Req.Body()) > 0 {
 		body = string(r.Req.Body())
 	}
-	return header + body
+
+	line1 := fmt.Sprintf("%s %s %s\r\n", valueOrDefault(string(req.Header.Method()), "GET"),
+		reqURI, protocol)
+	line2 := fmt.Sprintf("%s: %s\r\n", "Host", string(req.Host()))
+	requestRaw := line1 + line2 + tmpList[1] + body
+	return requestRaw
 }
 
+// dump 响应报文
 func (r *RespFormat) FormatContent() string {
 	respRaw := formatPool.Get().(*FormatString)
 	defer formatPut(respRaw)
@@ -70,7 +96,8 @@ func (r *RespFormat) FormatContent() string {
 	if len(r.Resp.Body()) > 0 {
 		body = string(r.Resp.Body())
 	}
-	return header + body
+	responseRaw := header + body
+	return responseRaw
 }
 
 func formatPut(f *FormatString) {
@@ -154,6 +181,15 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	copy(resp.Body, originalResp.Body())
 	return resp, nil
 }
+
+//func DumpFastHttpRequest(req *fasthttp.Request) ([]byte, error) {
+//	var err error
+//	save := req.Body()
+//
+//	var b bytes.Buffer
+//	reqURI := req.RequestURI()
+//
+//}
 
 func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, error) {
 	defer fasthttp.ReleaseRequest(req)

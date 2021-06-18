@@ -122,9 +122,6 @@ var doc = `{
                     }
                 ],
                 "description": "下载yaml",
-                "produces": [
-                    "application/json"
-                ],
                 "tags": [
                     "Plugin"
                 ],
@@ -356,6 +353,11 @@ var doc = `{
                         "name": "pagesize",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -383,13 +385,120 @@ var doc = `{
                 "summary": "product add",
                 "parameters": [
                     {
-                        "description": "plugin",
+                        "description": "webapp",
                         "name": "plugin",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rule.Plugin"
+                            "$ref": "#/definitions/db.Webapp"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/msg.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/product/{id}/": {
+            "get": {
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "description": "详情",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "product detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/msg.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "description": "更新",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "product update",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "webapp",
+                        "name": "webapp",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/db.Webapp"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/msg.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "description": "删除",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Product"
+                ],
+                "summary": "product delete",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -904,7 +1013,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/db.Vulnerability"
+                            "$ref": "#/definitions/vulnerability.SwagVulnerability"
                         }
                     }
                 ],
@@ -1004,7 +1113,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/db.Vulnerability"
+                            "$ref": "#/definitions/vulnerability.SwagVulnerability"
                         }
                     }
                 ],
@@ -1082,50 +1191,11 @@ var doc = `{
                 }
             }
         },
-        "db.Vulnerability": {
-            "type": "object",
-            "required": [
-                "name_zh"
-            ],
-            "properties": {
-                "category": {
-                    "type": "string"
-                },
-                "cnnvd": {
-                    "type": "string"
-                },
-                "cve": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "foreignWebapp": {
-                    "$ref": "#/definitions/db.Webapp"
-                },
-                "id": {
-                    "description": "gorm.Model",
-                    "type": "integer"
-                },
-                "language": {
-                    "type": "string"
-                },
-                "name_zh": {
-                    "type": "string"
-                },
-                "severity": {
-                    "type": "string"
-                },
-                "suggestion": {
-                    "type": "string"
-                },
-                "webapp": {
-                    "type": "integer"
-                }
-            }
-        },
         "db.Webapp": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
                 "id": {
                     "type": "integer"
@@ -1311,6 +1381,47 @@ var doc = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "vulnerability.SwagVulnerability": {
+            "type": "object",
+            "required": [
+                "name_zh"
+            ],
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "cnnvd": {
+                    "type": "string"
+                },
+                "cve": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "foreignWebapp": {
+                    "$ref": "#/definitions/db.Webapp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "name_zh": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "suggestion": {
+                    "type": "string"
+                },
+                "webapp": {
+                    "type": "integer"
                 }
             }
         }

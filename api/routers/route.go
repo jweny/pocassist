@@ -95,20 +95,24 @@ func InitRouter(port string) {
 			appRoutes.GET("/", webapp.Get)
 			// 增
 			appRoutes.POST("/", webapp.Add)
+			// 改
+			appRoutes.PUT("/:id/", webapp.Update)
+			// 详情
+			appRoutes.GET("/:id/", webapp.Detail)
+			// 删
+			appRoutes.DELETE("/:id/", webapp.Delete)
 		}
 
 		scanRoutes := v1.Group("/scan")
-		// todo scan add jwt
-		//scanRoutes.Use(jwt.JWT())
+		scanRoutes.Use(jwt.JWT())
 		{
-			scanRoutes.POST("/url", scan2.Url)
-			scanRoutes.POST("/raw", scan2.Raw)
-			scanRoutes.POST("/list", scan2.List)
+			scanRoutes.POST("/url/", scan2.Url)
+			scanRoutes.POST("/raw/", scan2.Raw)
+			scanRoutes.POST("/list/", scan2.List)
 		}
 
 		taskRoutes := v1.Group("/task")
-		// todo scan add jwt
-		//taskRoutes.Use(jwt.JWT())
+		taskRoutes.Use(jwt.JWT())
 		{
 			// all
 			taskRoutes.GET("/", task.Get)
@@ -117,8 +121,7 @@ func InitRouter(port string) {
 		}
 
 		resultRoutes := v1.Group("/result")
-		// todo scan add jwt
-		//resultRoutes.Use(jwt.JWT())
+		resultRoutes.Use(jwt.JWT())
 		{
 			// all
 			resultRoutes.GET("/", result.Get)

@@ -81,7 +81,7 @@ func AddPlugin(plugin Plugin) bool {
 }
 
 func DeletePlugin(id int) bool {
-	GlobalDB.Model(&Plugin{}).Where("id = ?", id).Delete(Plugin{})
+	GlobalDB.Model(&Plugin{}).Where("id = ?", id).Delete(&Plugin{})
 	return true
 }
 
@@ -111,7 +111,13 @@ func GenPluginVulId() (string,error) {
 	if len(splitList) != 2 {
 		return "", errors.New("数据库 plugin vul_id 格式不正确")
 	}
-	idNum, err := strconv.Atoi(splitList[1])
+	// 去除空格和换行符
+	bigNumber := splitList[1]
+	bigNumber = strings.Replace(bigNumber, " ", "", -1)
+	bigNumber = strings.Replace(bigNumber, "\r", "", -1)
+	bigNumber = strings.Replace(bigNumber, "\n", "", -1)
+
+	idNum, err := strconv.Atoi(bigNumber)
 	if err != nil {
 		return "", err
 	}

@@ -41,7 +41,9 @@ func Setup() {
 		if dbConfig.Sqlite == "" {
 			log.Fatalf("db.Setup err: config.yaml sqlite config not set")
 		}
-		GlobalDB, err = gorm.Open(sqlite.Open(dbConfig.Sqlite), &gorm.Config{})
+		GlobalDB, err = gorm.Open(sqlite.Open(dbConfig.Sqlite), &gorm.Config{
+			DisableForeignKeyConstraintWhenMigrating: true,
+		})
 		if err != nil {
 			log.Fatalf("db.Setup err: %v", err)
 		}

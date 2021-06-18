@@ -55,8 +55,11 @@ func Url(c *gin.Context) {
 		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
 		return
 	}
-	// todo 数据库创建task
+	token := c.Request.Header.Get("Authorization")
+	claims, _ := util.ParseToken(token)
+
 	task := db.Task{
+		Operator: claims.Username,
 		Remarks: scan.Remarks,
 		Target:  scan.Target,
 	}
@@ -130,7 +133,12 @@ func Raw(c *gin.Context) {
 	}
 
 	oReqUrl := oreq.URL.String()
+
+	token := c.Request.Header.Get("Authorization")
+	claims, _ := util.ParseToken(token)
+
 	task := db.Task{
+		Operator: claims.Username,
 		Remarks: remarks,
 		Target:  oReqUrl,
 	}
@@ -187,6 +195,9 @@ func List(c *gin.Context) {
 	}
 	targets := file.ReadingLines(filePath)
 
+	token := c.Request.Header.Get("Authorization")
+	claims, _ := util.ParseToken(token)
+
 	var oReqList []*http.Request
 	var taskList []*db.Task
 
@@ -197,6 +208,7 @@ func List(c *gin.Context) {
 			continue
 		}
 		task := db.Task{
+			Operator: claims.Username,
 			Remarks: remarks,
 			Target:  url,
 		}

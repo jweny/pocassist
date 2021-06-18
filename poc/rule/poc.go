@@ -37,7 +37,6 @@ func WriteVulResult(scanItem *ScanItem, output string, result *util.ScanResult){
 		" [plugin_name] ", scanItem.Plugin.JsonPoc.Name,
 		" [output] ", output,
 		" [detail] ", result)
-	// todo 将存结果 封装一层方法
 	detail, _:= json.Marshal(result)
 
 	res := db.Result{
@@ -137,7 +136,6 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 
 				if controller.IsAborted() {
 					result := util.VulnerableHttpResult(controller.originalReq.URL.String(),value, controller.respList)
-					// todo 写库
 					WriteVulResult(scanItem, value, result)
 					// 修改task状态
 					db.DownTask(scanItem.Task.Id)
@@ -145,12 +143,11 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 					controller.Reset()
 					return result, nil
 				}
-				WriteVulResult(scanItem, "", nil)
 				controller.Reset()
 				util.RequestPut(newReq)
 			}
 		}
-
+		WriteVulResult(scanItem, "", nil)
 	} else {
 		// 影响为其他类型
 		// 限速
@@ -167,9 +164,7 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 		}
 
 		if controller.IsAborted() {
-			// todo 写库
 			result := util.VulnerableHttpResult(controller.originalReq.URL.String(),"", controller.respList)
-			// todo 写库
 			WriteVulResult(scanItem, "", result)
 			util.RequestPut(newReq)
 			// 修改task状态

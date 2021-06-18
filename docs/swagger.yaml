@@ -19,34 +19,6 @@ definitions:
     - newpassword
     - password
     type: object
-  db.Vulnerability:
-    properties:
-      category:
-        type: string
-      cnnvd:
-        type: string
-      cve:
-        type: string
-      description:
-        type: string
-      foreignWebapp:
-        $ref: '#/definitions/db.Webapp'
-      id:
-        description: gorm.Model
-        type: integer
-      language:
-        type: string
-      name_zh:
-        type: string
-      severity:
-        type: string
-      suggestion:
-        type: string
-      webapp:
-        type: integer
-    required:
-    - name_zh
-    type: object
   db.Webapp:
     properties:
       id:
@@ -57,6 +29,8 @@ definitions:
         type: string
       remarks:
         type: string
+    required:
+    - name
     type: object
   msg.Response:
     properties:
@@ -172,6 +146,33 @@ definitions:
     required:
     - target
     - type
+    type: object
+  vulnerability.SwagVulnerability:
+    properties:
+      category:
+        type: string
+      cnnvd:
+        type: string
+      cve:
+        type: string
+      description:
+        type: string
+      foreignWebapp:
+        $ref: '#/definitions/db.Webapp'
+      id:
+        type: integer
+      language:
+        type: string
+      name_zh:
+        type: string
+      severity:
+        type: string
+      suggestion:
+        type: string
+      webapp:
+        type: integer
+    required:
+    - name_zh
     type: object
 info:
   contact: {}
@@ -312,8 +313,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/plugin.DownloadSwigger'
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
@@ -381,6 +380,9 @@ paths:
         name: pagesize
         required: true
         type: integer
+      - in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -396,12 +398,12 @@ paths:
     post:
       description: 新增
       parameters:
-      - description: plugin
+      - description: webapp
         in: body
         name: plugin
         required: true
         schema:
-          $ref: '#/definitions/rule.Plugin'
+          $ref: '#/definitions/db.Webapp'
       produces:
       - application/json
       responses:
@@ -412,6 +414,73 @@ paths:
       security:
       - token: []
       summary: product add
+      tags:
+      - Product
+  /api/v1/product/{id}/:
+    delete:
+      description: 删除
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: product delete
+      tags:
+      - Product
+    get:
+      description: 详情
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: product detail
+      tags:
+      - Product
+    put:
+      description: 更新
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: webapp
+        in: body
+        name: webapp
+        required: true
+        schema:
+          $ref: '#/definitions/db.Webapp'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/msg.Response'
+      security:
+      - token: []
+      summary: product update
       tags:
       - Product
   /api/v1/result/:
@@ -728,7 +797,7 @@ paths:
         name: vul
         required: true
         schema:
-          $ref: '#/definitions/db.Vulnerability'
+          $ref: '#/definitions/vulnerability.SwagVulnerability'
       produces:
       - application/json
       responses:
@@ -795,7 +864,7 @@ paths:
         name: vul
         required: true
         schema:
-          $ref: '#/definitions/db.Vulnerability'
+          $ref: '#/definitions/vulnerability.SwagVulnerability'
       produces:
       - application/json
       responses:

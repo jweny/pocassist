@@ -2,13 +2,12 @@ package db
 
 import (
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 // result表
 
 type Result struct {
-	gorm.Model
+	//gorm.Model
 	Id            int            `gorm:"primary_key" json:"id"`
 	Vul			  bool			 `gorm:"column:vul" json:"vul"`
 	Detail    	  datatypes.JSON `gorm:"column:detail" json:"detail"`
@@ -18,7 +17,6 @@ type Result struct {
 }
 
 func AddResult(result Result) bool {
-	// todo deal err
 	GlobalDB.Model(&Result{}).Create(&result)
 	return true
 }
@@ -35,13 +33,13 @@ func GetResultTotal(field *ResultSearchField) (total int64){
 	if field.TaskField != -1{
 		db = db.Where("task_id = ?", field.TaskField)
 	}
-	if field.TaskField != -1{
+	if field.VulField != -1{
 		db = db.Where("vul = ?", field.VulField)
 	}
 	if field.Search != ""{
 		db = db.Where(
-			GlobalDB.Where("remarks like ?", "%"+field.Search+"%").
-				Or("Target like ?", "%"+field.Search+"%"))
+			GlobalDB.Where("detail like ?", "%"+field.Search+"%")).
+				Or("plugin_name like ?", "%"+field.Search+"%")
 	}
 	db.Count(&total)
 	return
@@ -52,13 +50,12 @@ func GetResult(page int, pageSize int, field *ResultSearchField) (results []Resu
 	if field.TaskField != -1{
 		db = db.Where("task_id = ?", field.TaskField)
 	}
-	if field.TaskField != -1{
+	if field.VulField != -1{
 		db = db.Where("vul = ?", field.VulField)
 	}
 	if field.Search != ""{
 		db = db.Where(
-			GlobalDB.Where("remarks like ?", "%"+field.Search+"%").
-				Or("Target like ?", "%"+field.Search+"%"))
+			GlobalDB.Where("detail like ?", "%"+field.Search+"%"))
 	}
 	//	分页
 	if page > 0 && pageSize > 0 {
@@ -68,7 +65,7 @@ func GetResult(page int, pageSize int, field *ResultSearchField) (results []Resu
 }
 
 func DeleteResult(id int) bool {
-	GlobalDB.Model(&Result{}).Where("id = ?", id).Delete(Result{})
+	GlobalDB.Model(&Result{}).Where("id = ?", id).Delete(&Result{})
 	return true
 }
 

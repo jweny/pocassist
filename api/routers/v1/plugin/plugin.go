@@ -185,7 +185,7 @@ func Update(c *gin.Context) {
 		return
 	}
 	if db.ExistPluginByID(id) {
-		db.EditPlugin(plugin.Id, plugin)
+		db.EditPlugin(id, plugin)
 		c.JSON(msg.SuccessResp(plugin))
 		return
 	} else {
@@ -246,7 +246,6 @@ func Run(c *gin.Context) {
 		return
 	}
 
-	// todo 数据库创建task
 	task := db.Task{
 		Remarks:  "single poc",
 		Target:   run.Target,
