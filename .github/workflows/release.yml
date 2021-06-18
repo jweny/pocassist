@@ -45,15 +45,15 @@ jobs:
 
           mv build/myapp-darwin-*amd64 pocassist_darwin_amd64
 
-          zip pocassist_windows_386.zip pocassist_windows_386.exe pocassist.db pocassist.sql config.yaml
-          zip pocassist_windows_amd64.zip pocassist_windows_amd64.exe pocassist.db pocassist.sql config.yaml
+          zip pocassist_windows_386.zip pocassist_windows_386.exe
+          zip pocassist_windows_amd64.zip pocassist_windows_amd64.exe
 
-          zip pocassist_linux_386.zip pocassist_linux_386 pocassist.db pocassist.sql config.yaml
-          zip pocassist_linux_amd64.zip pocassist_linux_amd64 pocassist.db pocassist.sql config.yaml
-          zip pocassist_linux_arm64.zip pocassist_linux_arm64 pocassist.db pocassist.sql config.yaml
-          zip pocassist_linux_arm.zip pocassist_linux_arm pocassist.db pocassist.sql config.yaml
+          zip pocassist_linux_386.zip pocassist_linux_386
+          zip pocassist_linux_amd64.zip pocassist_linux_amd64
+          zip pocassist_linux_arm64.zip pocassist_linux_arm64
+          zip pocassist_linux_arm.zip pocassist_linux_arm
 
-          zip pocassist_darwin_amd64.zip pocassist_darwin_amd64 pocassist.db pocassist.sql config.yaml
+          zip pocassist_darwin_amd64.zip pocassist_darwin_amd64
 
       - name: Create Release
         id: create_release
