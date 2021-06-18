@@ -1,8 +1,4 @@
-<h1 align="center">POCASSIST</h1>
-
-![pocassist](https://socialify.git.ci/jweny/pocassist/image?description=1&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Favatars1.githubusercontent.com%2Fu%2F26767398&owner=1&pattern=Floating%20Cogs&pulls=1&stargazers=1&theme=Dark)
-
-
+![pocassist](https://socialify.git.ci/jweny/pocassist/image?description=1&descriptionEditable=%E5%85%A8%E6%96%B0%E7%9A%84%E5%BC%80%E6%BA%90%E6%BC%8F%E6%B4%9E%E6%B5%8B%E8%AF%95%E6%A1%86%E6%9E%B6%EF%BC%8C%E5%AE%9E%E7%8E%B0poc%E5%9C%A8%E7%BA%BF%E7%BC%96%E8%BE%91%E3%80%81%E8%BF%90%E8%A1%8C%E3%80%81%E6%89%B9%E9%87%8F%E6%B5%8B%E8%AF%95&font=Inter&forks=1&issues=1&language=1&logo=https%3A%2F%2Favatars1.githubusercontent.com%2Fu%2F26767398&owner=1&pattern=Floating%20Cogs&pulls=1&stargazers=1&theme=Dark)
 
 pocassist是一个 Golang 编写的全新开源漏洞测试框架。
 
