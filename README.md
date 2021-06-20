@@ -31,6 +31,15 @@ http://127.0.0.1:1231
 
 有想一块维护poc的师傅也可直接向该项目提PR。
 
+## 微信
+
+如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加进群沟通，或者添加我的微信进行交流。
+
+<p align="left">
+   <img alt="jweny wechat: bad-lucifer" src="docs/pic/wechat.jpeg" width="150"/>
+   <img alt="jweny wechat: bad-lucifer" src="docs/pic/群二维码.jpeg" width="150"/>
+</p>
+
 ## Demo
 
 登录页
@@ -84,15 +93,6 @@ http://127.0.0.1:1231
 5. 支持前后端分离部署。前端源码、nginx配置示例可参考[pocassistweb](https://github.com/jweny/pocassistweb)
 4. 其他使用问题请先阅读[使用文档](https://pocassist.jweny.top/)
 
-
-## 微信
-
-如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加进群沟通，或者添加我的微信进行交流。
-
-<p align="left">
-   <img alt="jweny wechat: bad-lucifer" src="docs/pic/wechat.jpeg" width="150"/>
-   <img alt="jweny wechat: bad-lucifer" src="docs/pic/群二维码.jpeg" width="150"/>
-</p>
 
 ## 免责声明
 
