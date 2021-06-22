@@ -28,7 +28,7 @@ type Serializer struct {
 type RunSerializer struct {
 	// 运行单个
 	Target			string		   `json:"target" binding:"required"`
-	VulId			string		   `json:"vul_id" binding:"required,startswith=poc-"`
+	VulId			string		   `json:"vul_id"`
 	Affects         string         `json:"affects" binding:"required"`
 	JsonPoc         datatypes.JSON `json:"json_poc"`
 }

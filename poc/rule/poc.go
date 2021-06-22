@@ -144,9 +144,9 @@ func RunPoc(inter interface{}) (*util.ScanResult, error) {
 					return result, nil
 				}
 				controller.Reset()
-				util.RequestPut(newReq)
 			}
 		}
+		util.RequestPut(newReq)
 		WriteVulResult(scanItem, "", nil)
 	} else {
 		// 影响为其他类型

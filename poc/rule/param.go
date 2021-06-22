@@ -2,7 +2,6 @@ package rule
 
 import (
 	"fmt"
-	"github.com/jweny/pocassist/pkg/cel/proto"
 	"net/url"
 	"strings"
 )
@@ -16,7 +15,8 @@ type ReplaceGet struct {
 }
 
 func (r *ReplaceGet) Replace(value string, field string, controller *PocController) {
-	reqQuery := ReplaceGetParam(controller.NewReq, value, field, controller.Affects)
+	getQuery := controller.NewReq.Url.Query
+	reqQuery := ReplaceGetParam(getQuery, value, field, controller.Affects)
 	req := controller.NewReq
 	curURL := fmt.Sprintf("%s://%s%s?%s", req.Url.Scheme, req.Url.Host, req.Url.Path, reqQuery)
 	controller.FastReq.SetRequestURI(curURL)
@@ -27,14 +27,14 @@ type ReplacePost struct {
 }
 
 func (r *ReplacePost) Replace(value string, field string, controller *PocController) {
-	bodyString := ReplacePostParam(string(controller.reqData), value, field, controller.Affects)
+	postData := string(controller.reqData)
+	bodyString := ReplacePostParam(postData, value, field, controller.Affects)
 	controller.FastReq.SetBodyString(bodyString)
 	return
 }
 
 // 返回 get url
-func ReplaceGetParam(originalReq *proto.Request, paramValue string, originalFields string, affects string) string {
-	originalQuery := originalReq.Url.Query
+func ReplaceGetParam(originalQuery string, paramValue string, originalFields string, affects string) string {
 	qs, err := url.ParseQuery(originalQuery)
 	if err != nil {
 		return ""

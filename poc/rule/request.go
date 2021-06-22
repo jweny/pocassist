@@ -2,12 +2,14 @@ package rule
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/util"
 	"github.com/valyala/fasthttp"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -72,7 +74,7 @@ func DoSingleRuleRequest(controller *PocController, rule *Rule) (*proto.Response
 		curPath = rule.Path
 	// url级
 	case AffectURL:
-		curPath = fmt.Sprint(curPath, strings.TrimPrefix(rule.Path, "/"))
+		//curPath = curPath, strings.TrimPrefix(rule.Path, "/"))
 	default:
 	}
 	// 兼容xray: 某些 poc 没有区分path和query
@@ -86,7 +88,50 @@ func DoSingleRuleRequest(controller *PocController, rule *Rule) (*proto.Response
 		httpRequest.Header.Set(k, v)
 	}
 	httpRequest.Header.SetMethod(rule.Method)
-	httpRequest.SetBody([]byte(rule.Body))
 
+	// 处理multipart
+	contentType := string(httpRequest.Header.ContentType())
+	if strings.HasPrefix(strings.ToLower(contentType),"multipart/form-data") && strings.Contains(rule.Body,"\n\n") {
+		multipartBody, err := DealMultipart(contentType, rule.Body)
+		if err != nil {
+			return nil, err
+		}
+		httpRequest.SetBody([]byte(multipartBody))
+	}else {
+		httpRequest.SetBody([]byte(rule.Body))
+	}
 	return util.DoFasthttpRequest(httpRequest, rule.FollowRedirects)
 }
+
+func DealMultipart(contentType string, ruleBody string) (result string, err error) {
+	// 处理multipart的/n
+	re := regexp.MustCompile(`(?m)multipart\/form-data; boundary=(.*)`)
+	match := re.FindStringSubmatch(contentType)
+	if len(match) != 2 {
+		return "", errors.New("no boundary in content-type")
+	}
+	boundary := "--" + match[1]
+	multiPartContent := ""
+
+	// 处理rule
+	multiFile := strings.Split(ruleBody, boundary)
+	if len(multiFile) == 0 {
+		return multiPartContent, errors.New("ruleBody.Body multi content format err")
+	}
+
+	for _, singleFile := range multiFile {
+		//	处理单个文件
+		//	文件头和文件响应
+		spliteTmp := strings.Split(singleFile,"\n\n")
+		if len(spliteTmp) == 2 {
+			fileHeader := spliteTmp[0]
+			fileBody := spliteTmp[1]
+			fileHeader = strings.Replace(fileHeader,"\n","\r\n",-1)
+			multiPartContent += boundary + fileHeader + "\r\n\r\n" + strings.TrimRight(fileBody ,"\n") + "\r\n"
+		}
+	}
+	multiPartContent += boundary + "--" + "\r\n"
+	return multiPartContent, nil
+}
+
+

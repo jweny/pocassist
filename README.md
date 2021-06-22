@@ -98,6 +98,14 @@ http://127.0.0.1:1231
 
 未经授权，使用pocassist攻击目标是非法的。pocassist仅用于安全测试目的。为避免被恶意使用，本项目所有收录的poc均为漏洞的理论判断，不存在漏洞利用过程，不会对目标发起真实攻击和漏洞利用。
 
+## 404StarLink 2.0 - Galaxy
+
+![](https://github.com/knownsec/404StarLink-Project/raw/master/logo.png)
+
+pocassist 是 404Team [星链计划2.0](https://github.com/knownsec/404StarLink2.0-Galaxy) 中的一环，如果对 pocassist 有任何疑问又或是想要找小伙伴交流，可以参考星链计划的加群方式。
+
+- [https://github.com/knownsec/404StarLink2.0-Galaxy#community](https://github.com/knownsec/404StarLink2.0-Galaxy#community)
+
 ## 参考项目
 
 - https://github.com/chaitin/xray/tree/master/pocs
@@ -106,3 +114,4 @@ http://127.0.0.1:1231
 - https://codelabs.developers.google.com/codelabs/cel-go#0
 - https://github.com/projectdiscovery/nuclei
 - https://github.com/projectdiscovery/nuclei-templates/
+
