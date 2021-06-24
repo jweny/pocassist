@@ -106,6 +106,12 @@ pocassist 是 404Team [星链计划2.0](https://github.com/knownsec/404StarLink2
 
 - [https://github.com/knownsec/404StarLink2.0-Galaxy#community](https://github.com/knownsec/404StarLink2.0-Galaxy#community)
 
+## Stargazers
+
+如果您觉得本项目对您有所帮助，请不要吝啬一个⭐哦！
+
+[![Stargazers over time](https://starchart.cc/jweny/pocassist.svg)](https://starchart.cc/jweny/pocassist)
+
 ## 参考项目
 
 - https://github.com/chaitin/xray/tree/master/pocs
