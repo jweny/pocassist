@@ -22,9 +22,8 @@ import (
 )
 
 //	判断s1是否包含s2
-var containsDec = decls.NewFunction("contains", decls.NewOverload("string_contains_string", []*exprpb.Type{decls.String, decls.String}, decls.Bool))
 var containsFunc = &functions.Overload{
-	Operator: "string_contains_string",
+	Operator: "contains_string",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
 		v1, ok := lhs.(types.String)
 		if !ok {
@@ -40,7 +39,6 @@ var containsFunc = &functions.Overload{
 		return types.Bool(strings.Contains(string(v1), string(v2)))
 	},
 }
-
 
 //	判断b1 是否包含 b2
 var bcontainsDec = decls.NewFunction("bcontains", decls.NewInstanceOverload("bytes_bcontains_bytes", []*exprpb.Type{decls.Bytes, decls.Bytes}, decls.Bool))
@@ -60,9 +58,8 @@ var bcontainsFunc = &functions.Overload{
 }
 
 //	使用正则表达式s1来匹配s2
-var matchDec = decls.NewFunction("matches", decls.NewOverload("string_match_string", []*exprpb.Type{decls.String, decls.String}, decls.Bool))
 var matchFunc = &functions.Overload{
-	Operator: "string_match_string",
+	Operator: "matches_string",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
 		v1, ok := lhs.(types.String)
 		if !ok {
@@ -106,7 +103,7 @@ var bmatchFunc = &functions.Overload{
 }
 
 //	map 中是否包含某个 key，目前只有 headers 是 map[string][string] 类型
-var inDec = decls.NewFunction("in", decls.NewInstanceOverload("string_in_map_key", []*exprpb.Type{decls.String, decls.NewMapType(decls.String,decls.String)}, decls.Bool))
+var inDec = decls.NewFunction("in", decls.NewInstanceOverload("string_in_map_key", []*exprpb.Type{decls.String, decls.NewMapType(decls.String, decls.String)}, decls.Bool))
 var inFunc = &functions.Overload{
 	Operator: "string_in_map_key",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
@@ -350,7 +347,7 @@ var reverseWaitFunc = &functions.Overload{
 
 type CustomLib struct {
 	// 声明
-	envOptions     []cel.EnvOption
+	envOptions []cel.EnvOption
 	// 实现
 	programOptions []cel.ProgramOption
 }
@@ -374,7 +371,7 @@ func InitCelOptions() CustomLib {
 		),
 		// 定义
 		cel.Declarations(
-			containsDec, bcontainsDec, matchDec, bmatchDec,md5Dec,
+			bcontainsDec, bmatchDec, md5Dec,
 			//startsWithDec, endsWithDec,
 			inDec, randomIntDec, randomLowercaseDec,
 			base64StringDec, base64BytesDec, base64DecodeStringDec, base64DecodeBytesDec,
@@ -390,7 +387,7 @@ func InitCelOptions() CustomLib {
 		base64StringFunc, base64BytesFunc, base64DecodeStringFunc, base64DecodeBytesFunc,
 		urlencodeStringFunc, urlencodeBytesFunc, urldecodeStringFunc, urldecodeBytesFunc,
 		substrFunc, sleepFunc, reverseWaitFunc,
-		)}
+	)}
 	return custom
 }
 
