@@ -33,10 +33,24 @@ var containsFunc = &functions.Overload{
 		if !ok {
 			return types.ValOrErr(rhs, "unexpected type '%v' passed to contains", rhs.Type())
 		}
-		// 不区分大小写包含
-		//return types.Bool(strings.Contains(strings.ToLower(string(v1)), strings.ToLower(string(v2))))
-		// 区分大小写
 		return types.Bool(strings.Contains(string(v1), string(v2)))
+	},
+}
+
+// 判断s1是否包含s2, 忽略大小写
+var iContainsDec = decls.NewFunction("icontains", decls.NewInstanceOverload("string_icontains_string", []*exprpb.Type{decls.String, decls.String}, decls.Bool))
+var iContainsFunc = &functions.Overload{
+	Operator: "string_icontains_string",
+	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
+		v1, ok := lhs.(types.String)
+		if !ok {
+			return types.ValOrErr(lhs, "unexpected type '%v' passed to icontains", lhs.Type())
+		}
+		v2, ok := rhs.(types.String)
+		if !ok {
+			return types.ValOrErr(rhs, "unexpected type '%v' passed to icontains", rhs.Type())
+		}
+		return types.Bool(strings.Contains(strings.ToLower(string(v1)), strings.ToLower(string(v2))))
 	},
 }
 
@@ -371,7 +385,7 @@ func InitCelOptions() CustomLib {
 		),
 		// 定义
 		cel.Declarations(
-			bcontainsDec, bmatchDec, md5Dec,
+			bcontainsDec, iContainsDec, bmatchDec, md5Dec,
 			//startsWithDec, endsWithDec,
 			inDec, randomIntDec, randomLowercaseDec,
 			base64StringDec, base64BytesDec, base64DecodeStringDec, base64DecodeBytesDec,
@@ -381,7 +395,7 @@ func InitCelOptions() CustomLib {
 	}
 	// 实现
 	custom.programOptions = []cel.ProgramOption{cel.Functions(
-		containsFunc, bcontainsFunc, matchFunc, bmatchFunc, md5Func,
+		containsFunc, iContainsFunc, bcontainsFunc, matchFunc, bmatchFunc, md5Func,
 		//startsWithFunc,  endsWithFunc,
 		inFunc, randomIntFunc, randomLowercaseFunc,
 		base64StringFunc, base64BytesFunc, base64DecodeStringFunc, base64DecodeBytesFunc,
