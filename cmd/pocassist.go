@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/jweny/pocassist/api/routers"
-	conf2 "github.com/jweny/pocassist/pkg/conf"
+	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
@@ -17,12 +18,14 @@ import (
 )
 
 func init() {
-	PrintBanner()
+	fmt.Printf("%s\n", conf.Banner)
+	fmt.Printf("\t\tv" + conf.Version + "\n\n")
+	fmt.Printf("\t\t" + conf.Website + "\n\n")
 }
 
 func InitAll() {
 	// config 必须最先加载
-	conf2.Setup()
+	conf.Setup()
 	logging.Setup()
 	db.Setup()
 	routers.Setup()
@@ -37,7 +40,7 @@ func HotConf() {
 		log.Fatalf("cmd.HotConf, fail to get current path: %v", err)
 	}
 	// 配置文件路径 当前文件夹 + config.yaml
-	configFile := path.Join(dir, "config.yaml")
+	configFile := path.Join(dir, conf.ConfigFileName)
 	viper.SetConfigType("yaml")
 	viper.SetConfigFile(configFile)
 	// watch 监控配置文件变化
@@ -51,17 +54,17 @@ func HotConf() {
 
 func RunApp() {
 	app := cli.NewApp()
-	app.Name = "pocassist"
-	app.Usage = "Online POC Framework Without Writing Code"
-	app.Version = "1.0.0"
+	app.Name = conf.ServiceName
+	app.Usage = conf.Website
+	app.Version = conf.Version
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			// 后端端口
-			Name:  "port",
+			Name:    "port",
 			Aliases: []string{"p"},
-			Value: "1231",
-			Usage: "web server `PORT`",
+			Value:   conf.DefaultPort,
+			Usage:   "web server `PORT`",
 		},
 	}
 	app.Action = RunServer
