@@ -1,105 +1,88 @@
 package rule
 
 import (
-	"context"
-	"errors"
-	"github.com/jweny/pocassist/pkg/conf"
-	"github.com/jweny/pocassist/pkg/db"
-	"github.com/jweny/pocassist/pkg/logging"
+	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/poc/scripts"
-	"golang.org/x/time/rate"
-	"net/http"
 	"strconv"
-	"time"
 )
 
-// 限制速率
-var limiter *rate.Limiter
+type HandlerFunc func(ctx controllerContext)
 
-func InitRate() {
-	maxQps := conf.GlobalConfig.HttpConfig.MaxQps
-	parallel := conf.GlobalConfig.PluginsConfig.Parallel
-
-	limit := rate.Every(time.Duration(maxQps) * time.Millisecond)
-	// 第二个参数 和 并发加载的 plugin 数匹配
-	limiter = rate.NewLimiter(limit, parallel)
-}
-
-func LimitWait() {
-	limiter.Wait(context.Background())
-}
-
-// 限制并发
-type ScanItem struct {
-	Req    *http.Request // 原始请求
-	Plugin *Plugin       // 检测插件
-	Task   *db.Task		 // 所属任务
-}
 
 var Handles map[string][]HandlerFunc
 
-func ExecExpressionHandle(controller *PocController) error {
+
+func ExecExpressionHandle(ctx controllerContext){
 	var result bool
 	var err error
-	if controller.poc.Groups != nil {
-		result, err = controller.ParseGroupsRule()
+
+	poc := ctx.GetPoc()
+	if poc == nil {
+		log.Error("[rule/handle.go:ExecExpressionHandle error] ", "poc is nil")
+		return
+	}
+	if poc.Groups != nil {
+		result, err = ctx.Groups()
 	} else {
-		result, err = controller.ParsePocRule()
+		result, err = ctx.Rules(poc.Rules)
 	}
 	if err != nil {
-		return err
+		log.Error("[rule/handle.go:ExecExpressionHandle error] ", err)
+		return
 	}
 	if result {
-		logging.GlobalLogger.Info("[=== find vulnerability===]\n",
-			" [plugin_id] ", controller.pluginId,
-			" [plugin_name] ", controller.poc.Name)
-		controller.Abort()
+		ctx.Abort()
 	}
-
-	logging.GlobalLogger.Info("[=== not vul===]\n",
-		" [plugin_id] ", controller.pluginId,
-		" [plugin_name] ", controller.poc.Name)
-	return nil
+	return
 }
 
-func ExecScriptHandle(controller *PocController) error {
-	scanFunc := scripts.GetScriptFunc(controller.poc.Name)
+func ExecScriptHandle(ctx controllerContext) {
+	pocName := ctx.GetPocName()
+	scanFunc := scripts.GetScriptFunc(pocName)
 	if scanFunc == nil {
-		return errors.New("未找到匹配的脚本，请检查脚本register方法中的第一个参数是否为规则名称")
+		log.Error("[rule/handle.go:ExecScriptHandle error] ", "scan func is nil")
+		ctx.Abort()
+		return
 	}
+	log.Info("[rule/handle.go:ExecScriptHandle script start]" + pocName)
 
 	var isHTTPS bool
+	// 处理端口
 	defaultPort := 80
-	if controller.originalReq.URL.Scheme == "https" {
+	originalReq := ctx.GetOriginalReq()
+	if originalReq == nil {
+		log.Error("[rule/handle.go:ExecScriptHandle error] ", "original request is nil")
+		ctx.Abort()
+		return
+	}
+
+	if originalReq.URL.Scheme == "https" {
 		isHTTPS = true
 		defaultPort = 443
 	}
 
-	if controller.originalReq.URL.Port() != "" {
-		port, err := strconv.ParseUint(controller.originalReq.URL.Port(), 10, 16)
+	if originalReq.URL.Port() != "" {
+		port, err := strconv.ParseUint(originalReq.URL.Port(), 10, 16)
 		if err != nil {
-			controller.Abort()
-			return err
+			ctx.Abort()
+			return
 		}
 		defaultPort = int(port)
 	}
 
 	args := &scripts.ScriptScanArgs{
-		Host:    controller.originalReq.URL.Hostname(),
+		Host:    originalReq.URL.Hostname(),
 		Port:    uint16(defaultPort),
 		IsHTTPS: isHTTPS,
 	}
-
 	result, err := scanFunc(args)
 	if err != nil {
-		logging.GlobalLogger.Error("[script scan failed ]", controller.pluginId, " err:", err)
-		return err
+		log.Error("[rule/handle.go:ExecScriptHandle error] ", err)
+		ctx.Abort()
+		return
 	}
-	logging.GlobalLogger.Info("[script scan finished ]",
-		" [plugin_id] ", controller.pluginId,
-		" [script_func] ", scanFunc,
-		" [result] ", result)
-	return nil
+	ctx.SetResult(result)
+	ctx.Abort()
 }
 
 func Setup() {
@@ -107,9 +90,9 @@ func Setup() {
 	Handles[AffectScript] = []HandlerFunc{ExecScriptHandle}
 	Handles[AffectAppendParameter] = []HandlerFunc{ExecExpressionHandle}
 	Handles[AffectReplaceParameter] = []HandlerFunc{ExecExpressionHandle}
-
 	// 速率限制
 	InitRate()
+	InitOreqChannel()
 }
 
 func getHandles(affect string) []HandlerFunc {
@@ -119,3 +102,4 @@ func getHandles(affect string) []HandlerFunc {
 	}
 	return defaultHandlers
 }
+

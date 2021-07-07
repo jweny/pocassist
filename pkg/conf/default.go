@@ -6,14 +6,23 @@ import (
 )
 
 var defaultYamlByte = []byte(`
+# Log配置
+logConfig:
+  # 每个日志文件保存的最大尺寸 单位：M
+  max_size: 50
+  # 日志文件最多保存多少个备份
+  max_backups: 1
+  # 文件最多保存多少天
+  max_age: 365
+  # 是否压缩
+  compress: false
+
 # webserver配置
 serverConfig:
   # 配置jwt秘钥
   jwt_secret: "pocassist"
   # gin的运行模式 "release" 或者 "debug"
   run_mode: "release"
-  # 运行日志的文件名，日志将保存在二进制所在目录
-  log_name : "pocassist.log"
 
 # HTTP配置
 httpConfig:
@@ -46,17 +55,37 @@ dbConfig:
     database: "pocassist"
     # 数据库连接超时时间
     timeout: "3s"
+  # 是否使用已有漏洞库
+  enableDefault: true
 
 # 插件配置
 pluginsConfig:
-  # 并发量:同时运行的插件数量
+  # 插件并发量:同时运行的插件数量
   parallel: 8
+  # 扫描任务并发量
+  concurrent: 10
 
 # 反连平台配置: 目前使用 ceye.io
 reverse:
   api_key: ""
   domain: ""
 `)
+
+
+const DefaultPort = "1231"
+const ConfigFileName = "config.yaml"
+const ServiceName = "pocassist"
+const Website = "https://pocassist.jweny.top/"
+
+const Version = "1.0.2"
+const Banner = `
+                               _     _
+ _ __   ___   ___ __ _ ___ ___(_)___| |_
+| '_ \ / _ \ / __/ _' / __/ __| / __| __|
+| |_) | (_) | (_| (_| \__ \__ \ \__ \ |_
+| .__/ \___/ \___\__,_|___/___/_|___/\__|
+|_|
+`
 
 var runMode = []string{"debug","release"}
 
@@ -74,7 +103,7 @@ func StrInArray (str string, array []string) error {
 	return errors.New(str + "must in" + ArrayToString(array))
 }
 
-func verifiyConfig() error {
+func VerifyConfig() error {
 	var err error
 	err = StrInArray(GlobalConfig.ServerConfig.RunMode, runMode)
 	if err != nil {

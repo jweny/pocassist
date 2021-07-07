@@ -3,11 +3,15 @@ package db
 import (
 	"fmt"
 	"github.com/jweny/pocassist/pkg/conf"
+	"github.com/jweny/pocassist/pkg/file"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
+	"os"
+	"path"
+	"path/filepath"
 )
 
 var GlobalDB *gorm.DB
@@ -41,6 +45,19 @@ func Setup() {
 		if dbConfig.Sqlite == "" {
 			log.Fatalf("db.Setup err: config.yaml sqlite config not set")
 		}
+		if dbConfig.EnableDefault {
+			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+			if err != nil {
+				log.Fatalf("db.Setup, fail to get current path: %v", err)
+			}
+			//配置文件路径 当前文件夹 + config.yaml
+			defaultSqliteFile := path.Join(dir, "pocassist.db")
+			// 检测 sqlite 文件是否存在
+			if !file.Exists(defaultSqliteFile) {
+				log.Fatalf("db.Setup err: use default db, but pocassist.db not exist")
+			}
+		}
+
 		GlobalDB, err = gorm.Open(sqlite.Open(dbConfig.Sqlite), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 		})

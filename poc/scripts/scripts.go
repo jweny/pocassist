@@ -2,7 +2,7 @@ package scripts
 
 import (
 	"fmt"
-	"github.com/jweny/pocassist/pkg/logging"
+	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
 	"strings"
 )
@@ -27,7 +27,7 @@ func GetScriptFunc(pocName string) ScriptScanFunc {
 
 func ScriptRegister(pocName string, handler ScriptScanFunc) {
 	if _, ok := scriptHandlers[pocName]; ok {
-		logging.GlobalLogger.Panic("[script register vulId ]", pocName)
+		log.Panic("[script register vulId ]", pocName)
 	}
 	scriptHandlers[pocName] = handler
 }

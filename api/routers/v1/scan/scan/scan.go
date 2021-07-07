@@ -7,7 +7,6 @@ import (
 	"github.com/jweny/pocassist/api/msg"
 	"github.com/jweny/pocassist/pkg/db"
 	"github.com/jweny/pocassist/pkg/file"
-	"github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
 	"github.com/jweny/pocassist/poc/rule"
 	"io/ioutil"
@@ -43,21 +42,23 @@ func Url(c *gin.Context) {
 		c.JSON(msg.ErrResp("测试url不可为空，扫描类型为multi或all"))
 		return
 	}
+
 	oreq, err := util.GenOriginalReq(scan.Target)
-	if err != nil {
-		logging.GlobalLogger.Error("[original request gen err ]", err)
+	if err != nil || oreq == nil {
 		c.JSON(msg.ErrResp("原始请求生成失败"))
 		return
 	}
+
+	// 插件列表
 	plugins, err := rule.LoadDbPlugin(scan.Type, scan.VulList)
-	if err != nil {
-		logging.GlobalLogger.Error("[plugins load err ]", err)
-		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
+	if err != nil || plugins == nil{
+		c.JSON(msg.ErrResp("poc插件加载失败" + err.Error()))
 		return
 	}
 	token := c.Request.Header.Get("Authorization")
 	claims, _ := util.ParseToken(token)
 
+	// 创建任务
 	task := db.Task{
 		Operator: claims.Username,
 		Remarks: scan.Remarks,
@@ -65,7 +66,8 @@ func Url(c *gin.Context) {
 	}
 	db.AddTask(&task)
 	c.JSON(msg.SuccessResp("任务下发成功"))
-	go rule.RunPlugins(oreq, plugins, &task)
+	rule.OriginalReqChannel <- oreq
+	go rule.RunPlugins(plugins, &task)
 	return
 }
 
@@ -112,10 +114,7 @@ func Raw(c *gin.Context) {
 	}
 
 	oreq, err := http.ReadRequest(bufio.NewReader(bytes.NewReader(raw)))
-	if err != nil {
-		logging.GlobalLogger.Error("[original request gen err ]" , err)
-	}
-	if oreq == nil {
+	if err != nil || oreq == nil {
 		c.JSON(msg.ErrResp("生成原始请求失败"))
 		return
 	}
@@ -126,8 +125,7 @@ func Raw(c *gin.Context) {
 	}
 
 	plugins, err := rule.LoadDbPlugin(scanType, vulList)
-	if err != nil {
-		logging.GlobalLogger.Error("[plugins load err ]", err)
+	if err != nil || plugins == nil {
 		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
 		return
 	}
@@ -145,7 +143,8 @@ func Raw(c *gin.Context) {
 	db.AddTask(&task)
 	c.JSON(msg.SuccessResp("任务下发成功"))
 
-	go rule.RunPlugins(oreq, plugins, &task)
+	rule.OriginalReqChannel <- oreq
+	go rule.RunPlugins(plugins, &task)
 	return
 }
 
@@ -188,8 +187,7 @@ func List(c *gin.Context) {
 
 	// 加载poc
 	plugins, err := rule.LoadDbPlugin(scanType, vulList)
-	if err != nil {
-		logging.GlobalLogger.Error("[plugins load err ]", err)
+	if err != nil || plugins == nil{
 		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
 		return
 	}
@@ -204,7 +202,6 @@ func List(c *gin.Context) {
 	for _, url := range targets {
 		oreq, err := util.GenOriginalReq(url)
 		if err != nil {
-			logging.GlobalLogger.Error("[original request gen err ] " + url , err)
 			continue
 		}
 		task := db.Task{
@@ -225,7 +222,8 @@ func List(c *gin.Context) {
 	c.JSON(msg.SuccessResp("任务下发成功"))
 
 	for index, oreq := range oReqList {
-		go rule.RunPlugins(oreq, plugins, taskList[index])
+		rule.OriginalReqChannel <- oreq
+		go rule.RunPlugins(plugins, taskList[index])
 	}
 	return
 }

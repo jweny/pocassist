@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/jweny/pocassist/pkg/file"
 	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
 	"path"
@@ -24,12 +25,14 @@ type Mysql struct {
 }
 
 type DbConfig struct {
+	EnableDefault bool `mapstructure:"enableDefault"`
 	Sqlite string `mapstructure:"sqlite"`
 	Mysql Mysql `mapstructure:"mysql"`
 }
 
 type PluginsConfig struct {
 	Parallel int `mapstructure:"parallel"`
+	Concurrent int `mapstructure:"concurrent"`
 }
 
 type Reverse struct {
@@ -43,13 +46,12 @@ type Config struct {
 	PluginsConfig PluginsConfig `mapstructure:"pluginsConfig"`
 	Reverse       Reverse       `mapstructure:"reverse"`
 	ServerConfig  ServerConfig	`mapstructure:"serverConfig"`
+	LogConfig  	  LogConfig		`mapstructure:"logConfig"`
 }
 
 type ServerConfig struct {
 	JwtSecret	string	`mapstructure:"jwt_secret"`
 	RunMode		string	`mapstructure:"run_mode"`
-	LogName		string	`mapstructure:"log_name"`
-
 }
 
 type HttpConfig struct {
@@ -62,7 +64,44 @@ type HttpConfig struct {
 	MaxRedirect int     `mapstructure:"max_redirect"`
 }
 
+type LogConfig struct {
+	MaxSize		int     `mapstructure:"max_size"`
+	MaxBackups	int		`mapstructure:"max_backups"`
+	MaxAge		int		`mapstructure:"max_age"`
+	Compress 	bool	`mapstructure:"compress"`
+}
+
 var GlobalConfig *Config
+
+
+
+func (cfg *Config) Level() zapcore.Level {
+	return zapcore.DebugLevel
+}
+
+func (cfg *Config) MaxLogSize() int {
+	return cfg.LogConfig.MaxSize
+}
+
+func (cfg *Config) LogPath() string {
+	return ""
+}
+
+func (cfg *Config) ServiceName() string {
+	return ServiceName
+}
+
+func (cfg *Config) InfoOutput() string {
+	return ""
+}
+
+func (cfg *Config) ErrorOutput() string {
+	return ""
+}
+
+func (cfg *Config) DebugOutput() string {
+	return ""
+}
 
 // 加载配置
 func Setup() {
@@ -70,8 +109,9 @@ func Setup() {
 	if err != nil {
 		log.Fatalf("conf.Setup, fail to get current path: %v", err)
 	}
-	// 配置文件路径 当前文件夹 + config.yaml
+	//配置文件路径 当前文件夹 + config.yaml
 	configFile := path.Join(dir, "config.yaml")
+
 	// 检测配置文件是否存在
 	if !file.Exists(configFile) {
 		WriteYamlConfig(configFile)
@@ -93,7 +133,7 @@ func ReadYamlConfig(configFile string) {
 	if err != nil {
 		log.Fatalf("conf.Setup, fail to parse 'config.yaml', check format: %v", err)
 	}
-	err = verifiyConfig()
+	err = VerifyConfig()
 	if err != nil {
 		log.Fatalf("conf.Setup, fail to verify 'config.yaml', check format: %v", err)
 	}

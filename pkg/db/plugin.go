@@ -106,6 +106,10 @@ func ExistPluginByVulId(vul_id string) bool {
 func GenPluginVulId() (string,error) {
 	var plugin Plugin
 	GlobalDB.Model(&Plugin{}).Order("vul_id desc").Limit(1).Select("vul_id").First(&plugin)
+	// 数据库没有数据
+	if &plugin == nil {
+		return "poc-10001", nil
+	}
 	bigVulId := plugin.VulId
 	splitList := strings.Split(bigVulId,"-")
 	if len(splitList) != 2 {
