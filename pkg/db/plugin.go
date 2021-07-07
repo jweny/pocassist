@@ -111,6 +111,9 @@ func GenPluginVulId() (string,error) {
 		return "poc-10001", nil
 	}
 	bigVulId := plugin.VulId
+	if len(bigVulId) == 0 {
+		return "poc-10001", nil
+	}
 	splitList := strings.Split(bigVulId,"-")
 	if len(splitList) != 2 {
 		return "", errors.New("数据库 plugin vul_id 格式不正确")
