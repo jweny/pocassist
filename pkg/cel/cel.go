@@ -14,6 +14,7 @@ import (
 	reverse2 "github.com/jweny/pocassist/pkg/cel/reverse"
 	"github.com/jweny/pocassist/pkg/util"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	"gopkg.in/yaml.v2"
 	"math/rand"
 	"net/url"
 	"regexp"
@@ -407,15 +408,18 @@ func InitCelOptions() CustomLib {
 
 //	如果有set：追加set变量到 cel options
 //	这里得注意下 reverse的顺序问题 map可能是随机的
-func (c *CustomLib) AddRuleSetOptions(args map[string]string) {
-	for k, v := range args {
+func (c *CustomLib) AddRuleSetOptions(args []yaml.MapItem) {
+	for _, arg := range args {
 		// 在执行之前是不知道变量的类型的，所以统一声明为字符型
 		// 所以randomInt虽然返回的是int型，在运算中却被当作字符型进行计算，需要重载string_*_string
+		k := arg.Key.(string)
+		v := arg.Value.(string)
+
 		var d *exprpb.Decl
 		if strings.HasPrefix(v, "randomInt") {
 			d = decls.NewVar(k, decls.Int)
 		} else if strings.HasPrefix(v, "newReverse") {
-			d = decls.NewVar(k, decls.NewObjectType("utils.Reverse"))
+			d = decls.NewVar(k, decls.NewObjectType("util.Reverse"))
 		} else {
 			d = decls.NewVar(k, decls.String)
 		}

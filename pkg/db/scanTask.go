@@ -62,7 +62,7 @@ func GetTask(page int, pageSize int, field *TaskSearchField) (tasks []Task) {
 }
 
 func DeleteTask(id int) bool {
-	GlobalDB.Model(&Task{}).Where("id = ?", id).Delete(&Task{})
+	GlobalDB.Select("Results").Model(&Task{}).Where("id = ?", id).Delete(&Task{})
 	return true
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/conf"
+	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/url"
@@ -43,6 +44,10 @@ var (
 		},
 	}
 )
+
+type FormatString struct {
+	Raw string `json:"raw"`
+}
 
 type ReqFormat struct {
 	Req *fasthttp.Request
@@ -156,6 +161,7 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	resp.Status = int32(originalResp.StatusCode())
 	u, err := url.Parse(req.URI().String())
 	if err != nil {
+		log.Error("util/requests.go:ParseFasthttpResponse url parse error", req.URI().String(), err)
 		return nil, err
 	}
 	resp.Url = ParseUrl(u)
@@ -172,7 +178,12 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 		k := strings.ToLower(values[0])
 		// 修复bug 所有响应头 value去除左边空格
 		v := strings.TrimLeft(values[1]," ")
-		header[k] = v
+		// 修复bug 处理响应头 中多个相同的key 产生的覆盖问题
+		if header[k] != "" {
+			header[k] += v
+		} else {
+			header[k] = v
+		}
 	}
 	resp.Headers = header
 	resp.ContentType = string(originalResp.Header.Peek("Content-Type"))
@@ -181,15 +192,6 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	copy(resp.Body, originalResp.Body())
 	return resp, nil
 }
-
-//func DumpFastHttpRequest(req *fasthttp.Request) ([]byte, error) {
-//	var err error
-//	save := req.Body()
-//
-//	var b bytes.Buffer
-//	reqURI := req.RequestURI()
-//
-//}
 
 func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, error) {
 	defer fasthttp.ReleaseRequest(req)
@@ -216,6 +218,7 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 		err = fasthttpClient.DoTimeout(req, resp, time.Duration(timeout)*time.Second)
 	}
 	if err != nil {
+		log.Error("util/requests.go:DoFasthttpRequest fasthttp client doRequest error", req.RequestURI(),err)
 		return nil, err
 	}
 
@@ -301,6 +304,7 @@ func GenOriginalReq(url string) (*http.Request, error) {
 	}
 	originalReq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		log.Error("util/requests.go:GenOriginalReq original request gen error", url, err)
 		return nil, err
 	}
 	originalReq.Header.Set("User-Agent", conf.GlobalConfig.HttpConfig.Headers.UserAgent)

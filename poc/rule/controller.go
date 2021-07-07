@@ -1,57 +1,224 @@
 package rule
 
 import (
-	"errors"
 	"fmt"
-	cel2 "github.com/jweny/pocassist/pkg/cel"
 	"github.com/jweny/pocassist/pkg/cel/proto"
-	"github.com/jweny/pocassist/pkg/cel/reverse"
-	"github.com/jweny/pocassist/pkg/logging"
+	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
+	"github.com/valyala/fasthttp"
 	"net/http"
-	"regexp"
-	"sort"
 	"strings"
 	"sync"
-
-	"github.com/google/cel-go/cel"
-	"github.com/valyala/fasthttp"
 )
 
-type HandlerFunc func(*PocController) error
+const (
+	AffectContent          = "text"
+	AffectDirectory        = "directory"
+	AffectURL              = "url"
+	AffectAppendParameter  = "appendparam"
+	AffectReplaceParameter = "replaceparam"
+	AffectServer           = "server"
+	AffectScript           = "script"
+)
 
-var ControllerPool = sync.Pool{
-	New: func() interface{} {
-		return new(PocController)
-	},
+var ControllerPool = sync.Pool{}
+
+func NewController() *PocController {
+	if v := ControllerPool.Get(); v != nil {
+		c := v.(*PocController)
+		return c
+	}
+	return new(PocController)
+}
+
+func PutController(c *PocController) {
+	c.Reset()
+	ControllerPool.Put(c)
 }
 
 type PocController struct {
-	pluginId    string
-	originalReq *http.Request          // 原始请求  --> 初始条件
-	poc         *Poc                   // 加载的poc --> 初始条件
-	NewReq      *proto.Request         // 生成的新请求
-	celEnv      *cel.Env               // cel env
-	varMap      map[string]interface{} // 注入到cel中的变量
-	FastReq     *fasthttp.Request      // fasthttp 请求
-	Affects     string                 // 检测类型
-	reqData     []byte                 // 请求的内容
+	Plugin		*Plugin
+	Request		*RequestController
+	CEL         *CelController
 	Handles     []HandlerFunc          // 控制整个执行过程
-	Index       int64                  // 和Handles配套
-	abortIndex  int64                  // 终止的index
-	respList    []*proto.Response      // 记录请求和响应
+	Index       int64         // 和middlefunc 配套
+	abortIndex  int64         // 终止的index
+	ScriptResult *util.ScanResult
+	Keys       map[string]interface{}
 }
 
-func (controller *PocController) Next() error {
-	for controller.Index < int64(len(controller.Handles)) {
-		err := controller.Handles[controller.Index](controller)
-		if err != nil {
-			return err
+
+type controllerContext interface {
+	Next()
+	Abort()
+	IsAborted() bool
+	GetString(key string) string
+	Set(key string, value interface{})
+	Get(key string) (value interface{}, exists bool)
+	GetPoc() *Poc
+	Groups() (result bool, err error)
+	Rules([]Rule) (result bool, err error)
+	GetPocName() string
+	GetOriginalReq() *http.Request
+	SetResult(result *util.ScanResult)
+	// RegisterHandle(f HandlersChain)
+}
+
+func InitPocController(req *RequestController, plugin *Plugin, cel *CelController, handles []HandlerFunc) *PocController {
+	controller := NewController()
+	controller.Request = req
+	controller.Plugin = plugin
+	controller.CEL = cel
+	controller.Handles = handles
+	return controller
+}
+
+//	增加插件
+func (controller *PocController) AddMiddle(handle HandlerFunc) {
+	controller.Handles = append(controller.Handles, handle)
+}
+
+// 根据原始请求 + rule 生成并发起新的请求
+func (controller *PocController) DoSingleRuleRequest(rule *Rule) (*proto.Response, error) {
+	fastReq := controller.Request.Fast
+	// fixReq : 根据规则对原始请求进行变形
+	fixedFastReq := fasthttp.AcquireRequest()
+	fastReq.CopyTo(fixedFastReq)
+	curPath := string(fixedFastReq.URI().Path())
+
+	affects := controller.Plugin.Affects
+
+	switch affects {
+	// param级
+	case AffectAppendParameter, AffectReplaceParameter:
+		for k, v := range rule.Headers {
+			fixedFastReq.Header.Set(k, v)
 		}
+		return util.DoFasthttpRequest(fixedFastReq, rule.FollowRedirects)
+	//	content级
+	case AffectContent:
+		return util.DoFasthttpRequest(fixedFastReq, rule.FollowRedirects)
+	// dir级
+	case AffectDirectory:
+		// 目录级漏洞检测 判断是否以 "/"结尾
+		if curPath != "" && strings.HasSuffix(curPath, "/") {
+			// 去掉规则中的的"/" 再拼
+			curPath = fmt.Sprint(curPath, strings.TrimPrefix(rule.Path, "/"))
+		} else {
+			curPath = fmt.Sprint(curPath, "/" ,strings.TrimPrefix(rule.Path, "/"))
+		}
+	// server级
+	case AffectServer:
+		curPath = rule.Path
+	// url级
+	case AffectURL:
+		//curPath = curPath, strings.TrimPrefix(rule.Path, "/"))
+	default:
+	}
+	// 兼容xray: 某些 POC 没有区分path和query
+	curPath = strings.ReplaceAll(curPath, " ", "%20")
+	curPath = strings.ReplaceAll(curPath, "+", "%20")
+
+	fixedFastReq.URI().DisablePathNormalizing= true
+	fixedFastReq.URI().Update(curPath)
+
+	for k, v := range rule.Headers {
+		fixedFastReq.Header.Set(k, v)
+	}
+	fixedFastReq.Header.SetMethod(rule.Method)
+
+	// 处理multipart
+	contentType := string(fixedFastReq.Header.ContentType())
+	if strings.HasPrefix(strings.ToLower(contentType),"multipart/form-Data") && strings.Contains(rule.Body,"\n\n") {
+		multipartBody, err := DealMultipart(contentType, rule.Body)
+		if err != nil {
+			return nil, err
+		}
+		fixedFastReq.SetBody([]byte(multipartBody))
+	}else {
+		fixedFastReq.SetBody([]byte(rule.Body))
+	}
+	return util.DoFasthttpRequest(fixedFastReq, rule.FollowRedirects)
+}
+
+// 单个规则运行
+func (controller *PocController) SingleRule(rule *Rule) (bool, error) {
+	// 格式校验
+	err := rule.Verify()
+	if err != nil {
+		return false, err
+	}
+	// 替换 set
+	rule.ReplaceSet(controller.CEL.ParamMap)
+	// 根据原始请求 + rule 生成并发起新的请求 http
+	resp, err := controller.DoSingleRuleRequest(rule)
+	if err != nil {
+		return false, err
+	}
+	controller.CEL.ParamMap["response"] = resp
+	// 匹配search规则
+	if rule.Search != "" {
+		controller.CEL.ParamMap = rule.ReplaceSearch(resp, controller.CEL.ParamMap)
+	}
+	// 如果当前rule验证失败，立即释放
+	out, err := controller.CEL.Evaluate(rule.Expression)
+	if err != nil {
+		log.Error("[rule/controller.go:SingleRule cel evaluate error]", err)
+		return false, err
+	}
+	if !out {
+		util.ResponsePut(resp)
+		return false, nil
+	}
+	// 如果成功，记如请求链
+	controller.Request.Add(resp)
+	return out, err
+}
+
+// 执行 rules
+func (controller *PocController) Rules(rules []Rule) (bool, error) {
+	success := false
+	for _, rule := range rules {
+		singleRuleResult, err := controller.SingleRule(&rule)
+		if err != nil {
+			log.Error("[rule/controller.go:Rules run error]" , err)
+			return false, err
+		}
+		if !singleRuleResult {
+			//如果false 直接跳出循环 返回
+			success = false
+			break
+		}
+		success = true
+	}
+	return success, nil
+}
+
+// 执行 groups
+func (controller *PocController) Groups() (bool, error) {
+	groups := controller.Plugin.JsonPoc.Groups
+	// groups 就是多个rules 任何一个rules成功 即返回成功
+	for _, rules := range groups {
+		rulesResult, err := controller.Rules(rules)
+		if err != nil || !rulesResult {
+			continue
+		}
+		// groups中一个rules成功 即返回成功
+		if rulesResult {
+			return rulesResult, nil
+		}
+	}
+	return false, nil
+}
+
+func (controller *PocController) Next() {
+
+	for controller.Index < int64(len(controller.Handles)) {
+		controller.Handles[controller.Index](controller)
 		controller.Index++
 	}
-	return nil
 }
+
 
 func (controller *PocController) IsAborted() bool {
 	return controller.Index <= controller.abortIndex
@@ -63,266 +230,48 @@ func (controller *PocController) Abort() {
 }
 
 func (controller *PocController) Reset() {
-	fasthttp.ReleaseRequest(controller.FastReq)
-	util.ResponsesPut(controller.respList)
 	controller.Handles = nil
 	controller.Index = 0
 	controller.abortIndex = 0
-	controller.varMap = nil
-	controller.reqData = nil
-	controller.poc = nil
-	controller.celEnv = nil
-	controller.NewReq = nil
-	controller.pluginId = ""
+	controller.Plugin = nil
+	controller.CEL.Reset()
+	controller.Request.Reset()
+	controller.ScriptResult = nil
+	controller.Keys = nil
 	return
 }
 
-func InitPocController(originalReq *http.Request, p *Poc, affects string, data []byte) *PocController {
-	controller := ControllerPool.Get().(*PocController)
-	controller.originalReq = originalReq
-	controller.poc = p
-	controller.Affects = affects
-	controller.FastReq = fasthttp.AcquireRequest()
-	controller.reqData = data
-	_ = util.CopyRequest(originalReq, controller.FastReq, data)
-	return controller
+func (controller *PocController) Set(key string, value interface{}) {
+	if controller.Keys == nil {
+		controller.Keys = make(map[string]interface{})
+	}
+	controller.Keys[key] = value
 }
 
-//	增加插件
-func (controller *PocController) AddMiddle(handle HandlerFunc) {
-	controller.Handles = append(controller.Handles, handle)
-}
-
-//	初始化表达式
-func (controller *PocController) GenCelEnv() error {
-	//	初始化表达式
-	option := cel2.InitCelOptions()
-	//	注入set定义的变量
-	if controller.poc.Set != nil {
-		option.AddRuleSetOptions(controller.poc.Set)
-	}
-	//	生成cel环境
-	env, err := cel2.InitCelEnv(&option)
-	if err != nil {
-		logging.GlobalLogger.Error("[plugin cel env init ]" , err)
-		return err
-	}
-	controller.celEnv = env
-	return nil
-}
-
-//	初始化表达式
-func GenCelEnv(poc *Poc) (env *cel.Env, err error) {
-	//	初始化表达式
-	option := cel2.InitCelOptions()
-	//	注入set定义的变量
-	if poc.Set != nil {
-		option.AddRuleSetOptions(poc.Set)
-	}
-	//	生成cel环境
-	env, err = cel2.InitCelEnv(&option)
-	if err != nil {
-		return
-	}
-
+func (controller *PocController) Get(key string) (value interface{}, exists bool) {
+	value, exists = controller.Keys[key]
 	return
 }
 
-
-// 排序
-func SortMapKeys(m map[string]string) []string {
-	keys := make([]string, 0)
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// 处理poc: {{}} 替换为自定义的set
-func ParsePocSingleRule(rule *Rule, varMap map[string]interface{}) *Rule {
-	for setKey, setValue := range varMap {
-		// 过滤掉 map
-		_, isMap := setValue.(map[string]string)
-		if isMap {
-			continue
-		}
-		value := fmt.Sprintf("%v", setValue)
-		// 替换请求头中的 自定义字段
-		for headerKey, headerValue := range rule.Headers {
-			rule.Headers[headerKey] = strings.ReplaceAll(headerValue, "{{"+setKey+"}}", value)
-		}
-		// 替换请求路径中的 自定义字段
-		rule.Path = strings.ReplaceAll(strings.TrimSpace(rule.Path), "{{"+setKey+"}}", value)
-		// 替换body的 自定义字段
-		rule.Body = strings.ReplaceAll(strings.TrimSpace(rule.Body), "{{"+setKey+"}}", value)
-	}
-	return rule
-}
-
-// 实现 search
-func doSearch(re string, body string) map[string]string {
-	r, err := regexp.Compile(re)
-	if err != nil {
-		return nil
-	}
-	result := r.FindStringSubmatch(body)
-	names := r.SubexpNames()
-	if len(result) > 1 && len(names) > 1 {
-		paramsMap := make(map[string]string)
-		for i, name := range names {
-			if i > 0 && i <= len(result) {
-				paramsMap[name] = result[i]
-			}
-		}
-		return paramsMap
-	}
-	return nil
-}
-
-// 处理poc: search
-func ParsePocRuleSearch(rule *Rule, resp *proto.Response, varMap map[string]interface{}) map[string]interface{} {
-	result := doSearch(strings.TrimSpace(rule.Search), string(resp.Body))
-	if result != nil && len(result) > 0 { // 正则匹配成功
-		for k, v := range result {
-			varMap[k] = v
-		}
-	}
-	return varMap
-}
-
-// 处理poc: set
-func ParsePocSet(poc *Poc, env *cel.Env, newReq *proto.Request) (varMap map[string]interface{}, err error) {
-	varMap = make(map[string]interface{})
-
-	// 如果没有set 就直接返回
-	if len(poc.Set) == 0 {
-		return
-	}
-	varMap["request"] = newReq
-	//	获取所有Set key
-	setKeys := SortMapKeys(poc.Set)
-	// 处理set 先排序解析除了payload以外，其他的自定义变量
-	for _, k := range setKeys {
-		setValue := poc.Set[k]
-		if k != "payload" {
-			if setValue == "newReverse()" {
-				varMap[k] = reverse.NewReverse()
-				continue
-			}
-			out, err := cel2.Evaluate(env, setValue, varMap)
-			if err != nil {
-				continue
-			}
-			switch value := out.Value().(type) {
-			// set value 无论是什么类型都先转成string
-			case *proto.UrlType:
-				varMap[k] = util.UrlTypeToString(value)
-			case int64:
-				varMap[k] = int(value)
-			default:
-				varMap[k] = fmt.Sprintf("%v", out)
-			}
-		}
-	}
-	// 最后处理payload
-	if poc.Set["payload"] != "" {
-		out, err := cel2.Evaluate(env, poc.Set["payload"], varMap)
-		if err != nil {
-			return varMap, err
-		}
-		varMap["payload"] = fmt.Sprintf("%v", out)
+func (controller *PocController) GetString(key string) (s string) {
+	if val, ok := controller.Get(key); ok && val != nil {
+		s, _ = val.(string)
 	}
 	return
 }
 
-// 执行 rules
-func (controller *PocController) ParsePocRule() (bool, error) {
-	success := false
-
-	for _, rule := range controller.poc.Rules {
-		// 限制rule中的path必须以"/"开头
-		if strings.HasPrefix(rule.Path, "/") == false {
-			return false, errors.New("poc rule path must startWith \"/\"")
-		}
-		// 替换 set
-		completedRule := ParsePocSingleRule(&rule, controller.varMap)
-		// 根据原始请求 + rule 生成并发起新的请求 http
-
-		resp, err := DoSingleRuleRequest(controller, completedRule)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin http err ]" , err)
-			return false, err
-		}
-		controller.varMap["response"] = resp
-		// 匹配search规则
-		if rule.Search != "" {
-			controller.varMap = ParsePocRuleSearch(&rule, resp, controller.varMap)
-		}
-		out, err := cel2.Evaluate(controller.celEnv, rule.Expression, controller.varMap)
-		if err != nil {
-			logging.GlobalLogger.Error("[plugin cel evaluate ]" , err)
-			return false, err
-		}
-		if fmt.Sprintf("%v", out) == "false" {
-			util.ResponsePut(resp)
-			//如果false不继续执行后续rule
-			success = false
-			// 其中任何一次失败，都将直接跳出循环
-			break
-		}
-		controller.respList = append(controller.respList, resp)
-		success = true
-	}
-	return success, nil
+func (controller *PocController) GetPoc() *Poc {
+	return controller.Plugin.JsonPoc
 }
 
-// 执行 groups
-func (controller *PocController) ParseGroupsRule() (bool, error) {
+func (controller *PocController) GetPocName() string {
+	return controller.Plugin.JsonPoc.Name
+}
 
-	success := false
+func (controller *PocController) GetOriginalReq() *http.Request {
+	return controller.Request.Original
+}
 
-	for _, rules := range controller.poc.Groups {
-		for _, rule := range rules {
-			// 限制rule中的path必须以"/"开头
-			if strings.HasPrefix(rule.Path, "/") == false {
-				return false, errors.New("poc rule path must startWith \"/\"")
-			}
-			completedRule := ParsePocSingleRule(&rule, controller.varMap)
-			// 请求
-			resp, err := DoSingleRuleRequest(controller, completedRule)
-			if err != nil {
-				logging.GlobalLogger.Error("[plugin http err ]" , err)
-				return false, err
-			}
-			controller.varMap["response"] = resp
-			// 匹配search规则
-			if rule.Search != "" {
-				controller.varMap = ParsePocRuleSearch(&rule, resp, controller.varMap)
-			}
-			out, err := cel2.Evaluate(controller.celEnv, rule.Expression, controller.varMap)
-			if err != nil {
-				logging.GlobalLogger.Error("[plugin cel evaluate ]" , err)
-				return false, err
-			}
-			if fmt.Sprintf("%v", out) == "false" {
-				util.ResponsePut(resp)
-				success = false
-				// 其中任何一次失败，都将直接跳出循环
-				break
-			}
-			f := util.ReqFormat{
-				Req: controller.FastReq,
-			}
-			resp.ReqRaw = f.FormatContent()
-
-			controller.respList = append(controller.respList, resp)
-			success = true
-		}
-		// groups中一个rules成功 即返回成功
-		if success {
-			return success, nil
-		}
-	}
-	return success, nil
+func (controller *PocController) SetResult(result *util.ScanResult){
+	controller.ScriptResult = result
 }

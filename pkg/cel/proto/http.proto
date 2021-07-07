@@ -1,6 +1,6 @@
 syntax = "proto3";
-package utils;
-option go_package = "utils";
+package proto;
+option go_package = "proto";
 
 message UrlType {
   string scheme = 1;

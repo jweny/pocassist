@@ -2,7 +2,6 @@ package scripts
 
 import (
 	"bytes"
-
 	"github.com/jweny/pocassist/pkg/util"
 )
 

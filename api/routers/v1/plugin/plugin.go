@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jweny/pocassist/api/msg"
 	"github.com/jweny/pocassist/pkg/db"
-	"github.com/jweny/pocassist/pkg/logging"
+	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
 	"github.com/jweny/pocassist/poc/rule"
 	"github.com/unknwon/com"
@@ -234,14 +234,13 @@ func Run(c *gin.Context) {
 
 	oreq, err := util.GenOriginalReq(run.Target)
 	if err != nil {
-		logging.GlobalLogger.Error("[plugins.go run] fail to gen oreq")
 		c.JSON(msg.ErrResp("原始请求生成失败"))
 		return
 	}
 
 	poc, err := rule.ParseJsonPoc(run.JsonPoc)
 	if err != nil {
-		logging.GlobalLogger.Error("[plugins.go run] fail to load plugins", err)
+		log.Error("[plugins.go run] fail to load plugins", err)
 		c.JSON(msg.ErrResp("规则加载失败"))
 		return
 	}
@@ -262,9 +261,11 @@ func Run(c *gin.Context) {
 
 	result, err := rule.RunPoc(item)
 	if err != nil {
+		db.ErrorTask(task.Id)
 		c.JSON(msg.ErrResp("规则运行失败：" + err.Error()))
 		return
 	}
+	db.DownTask(task.Id)
 	c.JSON(msg.SuccessResp(result))
 	return
 }
@@ -286,13 +287,13 @@ func DownloadYaml(c *gin.Context) {
 	}
 	poc, err := rule.ParseJsonPoc(download.JsonPoc)
 	if err != nil {
-		logging.GlobalLogger.Error("[plugins.go download] fail to load plugins", err)
+		log.Error("[plugins.go download] fail to load plugins", err)
 		c.JSON(msg.ErrResp("规则解析失败"))
 		return
 	}
 	content, err :=yaml.Marshal(poc)
 	if err != nil {
-		logging.GlobalLogger.Error("[plugins.go download] fail to marshal yaml", err)
+		log.Error("[plugins.go download] fail to marshal yaml", err)
 		c.JSON(msg.ErrResp("yaml生成失败"))
 		return
 	}
