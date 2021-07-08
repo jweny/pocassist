@@ -5,6 +5,7 @@ import (
 	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/jweny/pocassist/pkg/db"
 	log "github.com/jweny/pocassist/pkg/logging"
+	"github.com/jweny/pocassist/pkg/util"
 	"github.com/panjf2000/ants/v2"
 	"gopkg.in/yaml.v2"
 	"net/http"
@@ -38,32 +39,42 @@ func ParseYamlPoc(yamlByte []byte) (*Poc, error) {
 }
 
 // 限制并发
-type ScanItem struct {
+type TaskItem struct {
 	OriginalReq *http.Request // 原始请求
-	Plugin      *Plugin       // 检测插件
+	Plugins     []Plugin       // 检测插件
 	Task        *db.Task      // 所属任务
 }
 
-func (item *ScanItem) Verify() error {
+var TaskChannel chan *TaskItem
+
+func InitTaskChannel(){
+	// channel 限制 target 并发
+	concurrent := 10
+	if conf.GlobalConfig.PluginsConfig.Concurrent != 0 {
+		concurrent = conf.GlobalConfig.PluginsConfig.Concurrent
+	}
+	TaskChannel = make(chan *TaskItem, concurrent)
+}
+
+func (item *TaskItem) Verify() error {
 	errMsg := ""
 	if item.Task == nil {
 		errMsg = "task create fail"
 		log.Error("[rule/parallel.go:Verify error]", errMsg)
 		return errors.New(errMsg)
 	}
-	if item.OriginalReq == nil || item.Plugin == nil {
+	if item.OriginalReq == nil{
 		errMsg = "not original request"
 		log.Error("[rule/parallel.go:Verify error]", errMsg)
 		return errors.New(errMsg)
 	}
-	if item.Plugin == nil {
+	if len(item.Plugins) == 0 {
 		errMsg = "not plugin"
 		log.Error("[rule/parallel.go:Verify error]", errMsg)
 		return errors.New(errMsg)
 	}
 	return nil
 }
-
 
 //	从数据库 中加载 POC
 func LoadDbPlugin(lodeType string, array []string) ([]Plugin, error) {
@@ -103,33 +114,52 @@ func LoadDbPlugin(lodeType string, array []string) ([]Plugin, error) {
 		plugins = append(plugins, plugin)
 	}
 	return plugins, nil
-
 }
 
+func TaskProducer(item *TaskItem){
+	TaskChannel <- item
+}
+
+func TaskConsumer(){
+	for item := range TaskChannel {
+		// 校验格式
+		err := item.Verify()
+		if err != nil {
+			log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+			db.ErrorTask(item.Task.Id)
+			continue
+		}
+		// 检查可用性
+		verify := util.VerifyTargetConnection(item.OriginalReq)
+		if !verify {
+			log.Error("[rule/parallel.go:TaskConsumer target can not connect]", item.OriginalReq.URL.String())
+			db.ErrorTask(item.Task.Id)
+			continue
+		}
+		RunPlugins(item)
+	}
+}
 
 // 并发测试
-func RunPlugins(plugins []Plugin, task *db.Task){
+func RunPlugins(item *TaskItem){
+	// 限制插件并发数
 	var wg sync.WaitGroup
-
-	// 插件并发数
 	parallel := conf.GlobalConfig.PluginsConfig.Parallel
-
 	p, _ := ants.NewPoolWithFunc(parallel, func(item interface{}) {
-		RunPoc(item)
+		RunPoc(item, false)
 		wg.Done()
 	})
 	defer p.Release()
+	oreq := item.OriginalReq
+	plugins := item.Plugins
+	task := item.Task
 
-	for OriginalReq := range OriginalReqChannel{
-		log.Info("[rule/parallel.go:RunPlugins start scan]", OriginalReq.URL.String())
-		for i := range plugins {
-			item := &ScanItem{OriginalReq, &plugins[i], task}
-			wg.Add(1)
-			p.Invoke(item)
-
-		}
+	log.Info("[rule/parallel.go:TaskConsumer start scan]", oreq.URL.String())
+	for i := range plugins {
+		item := &ScanItem{oreq, &plugins[i], task}
+		wg.Add(1)
+		p.Invoke(item)
 	}
-	// todo 这里刷新task状态
 	wg.Wait()
 	db.DownTask(task.Id)
 }

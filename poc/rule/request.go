@@ -11,8 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strings"
 )
 
 // poc运行期间的各类请求
@@ -28,7 +26,7 @@ type RequestController struct{
 	// 记录请求和响应报文列表
 	Raw      []*proto.Response
 	// 原始请求的参数
-	OriginalQueryParams url.Values
+	OriginalQueryParams string
 }
 
 func (rc *RequestController) Init(original *http.Request) (err error) {
@@ -58,28 +56,30 @@ func (rc *RequestController) InitOriginalQueryParams() error {
 	if method == "POST"{
 		paramsString = string(rc.Data)
 	}
-	params, err := url.ParseQuery(paramsString)
-	if err != nil {
-		return err
-	}
-	rc.OriginalQueryParams = params
+	rc.OriginalQueryParams = paramsString
 	return nil
 }
 
 func (rc *RequestController) FixQueryParams(field string, payload string, affects string) (err error) {
-	if rc.OriginalQueryParams == nil {
+	if rc.OriginalQueryParams == "" {
 		err = rc.InitOriginalQueryParams()
 	}
+	if err != nil {
+		return err
+	}
+	qs, err  := url.ParseQuery(rc.OriginalQueryParams)
+	if err != nil {
+		return err
+	}
 	var value string
-	if vs, ok := rc.OriginalQueryParams[field]; ok {
+	if vs, ok := qs[field]; ok {
 		if len(vs) == 0 {
 			value = ""
 		} else {
 			value = vs[0]
 		}
-		rc.OriginalQueryParams.Del(field)
+		qs.Del(field)
 	} else {
-
 		return errors.New("param payload fix err, field" + field + " not found")
 	}
 
@@ -90,12 +90,12 @@ func (rc *RequestController) FixQueryParams(field string, payload string, affect
 	} else {
 		return  errors.New("affects " + affects + " not support")
 	}
-	tmpQuery := rc.OriginalQueryParams.Encode()
+	tmpQuery := qs.Encode()
 	if tmpQuery != "" {
 		tmpQuery += "&"
 	}
 	// 把`field`放在最后，供人工验证时判断
-	tmpQuery += fmt.Sprintf("%v=%v", rc.OriginalQueryParams, value)
+	tmpQuery += fmt.Sprintf("%v=%v", field, value)
 	method := rc.Original.Method
 	if method == "GET"{
 		currentUrl := fmt.Sprintf("%s://%s%s?%s", rc.New.Url.Scheme, rc.New.Url.Host, rc.New.Url.Path, tmpQuery)
@@ -135,7 +135,7 @@ func (rc *RequestController) InitFast() (err error){
 	fastReq := fasthttp.AcquireRequest()
 	err = util.CopyRequest(rc.Original, fastReq, rc.Data)
 	if err != nil {
-		//logging.GlobalLogger.Error("util/requests.go:InitFast Err", err)
+		log.Error("util/requests.go:InitFast Err", err)
 		return err
 	}
 	rc.Fast = fastReq
@@ -143,9 +143,9 @@ func (rc *RequestController) InitFast() (err error){
 }
 
 func (rc *RequestController) InitData() (err error) {
-	rc.Data, err = GetOriginalReqBody(rc.Original)
+	rc.Data, err = util.GetOriginalReqBody(rc.Original)
 	if err != nil {
-		//logging.GlobalLogger.Error("util/requests.go:InitData Err", err)
+		log.Error("util/requests.go:InitData Err", err)
 	}
 	return err
 }
@@ -163,52 +163,4 @@ func (rc *RequestController) Reset() {
 	rc.Original = nil
 }
 
-func GetOriginalReqBody(originalReq *http.Request) ([]byte, error){
-	var data []byte
-	if originalReq.Body != nil && originalReq.Body != http.NoBody {
-		data, err := ioutil.ReadAll(originalReq.Body)
-		if err != nil {
-			return nil, err
-		}
-		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-	}
-	return data, nil
-}
-
-
-func DealMultipart(contentType string, ruleBody string) (result string, err error) {
-	errMsg := ""
-	// 处理multipart的/n
-	re := regexp.MustCompile(`(?m)multipart\/form-Data; boundary=(.*)`)
-	match := re.FindStringSubmatch(contentType)
-	if len(match) != 2 {
-		errMsg = "no boundary in content-type"
-		//logging.GlobalLogger.Error("util/requests.go:DealMultipart Err", errMsg)
-		return "", errors.New(errMsg)
-	}
-	boundary := "--" + match[1]
-	multiPartContent := ""
-
-	// 处理rule
-	multiFile := strings.Split(ruleBody, boundary)
-	if len(multiFile) == 0 {
-		errMsg = "ruleBody.Body multi content format err"
-		//logging.GlobalLogger.Error("util/requests.go:DealMultipart Err", errMsg)
-		return multiPartContent, errors.New(errMsg)
-	}
-
-	for _, singleFile := range multiFile {
-		//	处理单个文件
-		//	文件头和文件响应
-		spliteTmp := strings.Split(singleFile,"\n\n")
-		if len(spliteTmp) == 2 {
-			fileHeader := spliteTmp[0]
-			fileBody := spliteTmp[1]
-			fileHeader = strings.Replace(fileHeader,"\n","\r\n",-1)
-			multiPartContent += boundary + fileHeader + "\r\n\r\n" + strings.TrimRight(fileBody ,"\n") + "\r\n"
-		}
-	}
-	multiPartContent += boundary + "--" + "\r\n"
-	return multiPartContent, nil
-}
 

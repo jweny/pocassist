@@ -9,6 +9,8 @@ import (
 )
 
 func Setup() {
+	// 请求限速 limiter 初始化
+	InitRate()
 	// fasthttp client 初始化
 	DownProxy := conf2.GlobalConfig.HttpConfig.Proxy
 	client := &fasthttp.Client{

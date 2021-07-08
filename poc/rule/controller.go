@@ -44,7 +44,8 @@ type PocController struct {
 	Index       int64         // 和middlefunc 配套
 	abortIndex  int64         // 终止的index
 	ScriptResult *util.ScanResult
-	Keys       map[string]interface{}
+	Debug		bool
+	Keys        map[string]interface{}
 }
 
 
@@ -56,11 +57,12 @@ type controllerContext interface {
 	Set(key string, value interface{})
 	Get(key string) (value interface{}, exists bool)
 	GetPoc() *Poc
-	Groups() (result bool, err error)
-	Rules([]Rule) (result bool, err error)
+	Groups(bool) (result bool, err error)
+	Rules([]Rule, bool) (result bool, err error)
 	GetPocName() string
 	GetOriginalReq() *http.Request
 	SetResult(result *util.ScanResult)
+	IsDebug() bool
 	// RegisterHandle(f HandlersChain)
 }
 
@@ -70,6 +72,7 @@ func InitPocController(req *RequestController, plugin *Plugin, cel *CelControlle
 	controller.Plugin = plugin
 	controller.CEL = cel
 	controller.Handles = handles
+	controller.Debug = false
 	return controller
 }
 
@@ -130,7 +133,7 @@ func (controller *PocController) DoSingleRuleRequest(rule *Rule) (*proto.Respons
 	// 处理multipart
 	contentType := string(fixedFastReq.Header.ContentType())
 	if strings.HasPrefix(strings.ToLower(contentType),"multipart/form-Data") && strings.Contains(rule.Body,"\n\n") {
-		multipartBody, err := DealMultipart(contentType, rule.Body)
+		multipartBody, err := util.DealMultipart(contentType, rule.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +145,7 @@ func (controller *PocController) DoSingleRuleRequest(rule *Rule) (*proto.Respons
 }
 
 // 单个规则运行
-func (controller *PocController) SingleRule(rule *Rule) (bool, error) {
+func (controller *PocController) SingleRule(rule *Rule, debug bool) (bool, error) {
 	// 格式校验
 	err := rule.Verify()
 	if err != nil {
@@ -166,20 +169,24 @@ func (controller *PocController) SingleRule(rule *Rule) (bool, error) {
 		log.Error("[rule/controller.go:SingleRule cel evaluate error]", err)
 		return false, err
 	}
-	if !out {
-		util.ResponsePut(resp)
-		return false, nil
+	if debug {
+		controller.Request.Add(resp)
+	} else {
+		// 非debug模式下不记录 没有漏洞不记录请求链
+		if !out {
+			util.ResponsePut(resp)
+			return false, nil
+		} // 如果成功，记如请求链
+		controller.Request.Add(resp)
 	}
-	// 如果成功，记如请求链
-	controller.Request.Add(resp)
 	return out, err
 }
 
 // 执行 rules
-func (controller *PocController) Rules(rules []Rule) (bool, error) {
+func (controller *PocController) Rules(rules []Rule, debug bool) (bool, error) {
 	success := false
 	for _, rule := range rules {
-		singleRuleResult, err := controller.SingleRule(&rule)
+		singleRuleResult, err := controller.SingleRule(&rule, debug)
 		if err != nil {
 			log.Error("[rule/controller.go:Rules run error]" , err)
 			return false, err
@@ -195,11 +202,11 @@ func (controller *PocController) Rules(rules []Rule) (bool, error) {
 }
 
 // 执行 groups
-func (controller *PocController) Groups() (bool, error) {
+func (controller *PocController) Groups(debug bool) (bool, error) {
 	groups := controller.Plugin.JsonPoc.Groups
 	// groups 就是多个rules 任何一个rules成功 即返回成功
 	for _, rules := range groups {
-		rulesResult, err := controller.Rules(rules)
+		rulesResult, err := controller.Rules(rules, debug)
 		if err != nil || !rulesResult {
 			continue
 		}
@@ -238,6 +245,7 @@ func (controller *PocController) Reset() {
 	controller.Request.Reset()
 	controller.ScriptResult = nil
 	controller.Keys = nil
+	controller.Debug = false
 	return
 }
 
@@ -274,4 +282,8 @@ func (controller *PocController) GetOriginalReq() *http.Request {
 
 func (controller *PocController) SetResult(result *util.ScanResult){
 	controller.ScriptResult = result
+}
+
+func (controller *PocController) IsDebug() bool {
+	return controller.Debug
 }

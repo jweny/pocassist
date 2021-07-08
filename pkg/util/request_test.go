@@ -2,21 +2,25 @@ package util
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 )
 
 
-func TestDoFasthttpRequest(t *testing.T) {
-	var m map[string]string
-
-	if m["aaa"] != "" {
-		fmt.Println(1)
-	} else {
-		fmt.Println(0)
-	}
-
+func TestVerifyTargetConnection(t *testing.T) {
+	//var m map[string]string
 	//
+	//if m["aaa"] != "" {
+	//	fmt.Println(1)
+	//} else {
+	//	fmt.Println(0)
+	//}
+
+	originalReq, _ := http.NewRequest("GET", "http://www.jweny.com/", nil)
+	fmt.Println(VerifyTargetConnection(originalReq))
+
+
 	//req := fasthttp.AcquireRequest()
 	//req.SetRequestURI("https://www.360.cn")
 	//requestBody := []byte(`{"request":"test"}`)

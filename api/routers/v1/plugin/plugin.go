@@ -237,7 +237,11 @@ func Run(c *gin.Context) {
 		c.JSON(msg.ErrResp("原始请求生成失败"))
 		return
 	}
-
+	verify := util.VerifyTargetConnection(oreq)
+	if !verify {
+		c.JSON(msg.ErrResp("测试目标连通性测试不通过"))
+		return
+	}
 	poc, err := rule.ParseJsonPoc(run.JsonPoc)
 	if err != nil {
 		log.Error("[plugins.go run] fail to load plugins", err)
@@ -259,7 +263,7 @@ func Run(c *gin.Context) {
 
 	item := &rule.ScanItem{oreq, &currentPlugin, &task}
 
-	result, err := rule.RunPoc(item)
+	result, err := rule.RunPoc(item, true)
 	if err != nil {
 		db.ErrorTask(task.Id)
 		c.JSON(msg.ErrResp("规则运行失败：" + err.Error()))

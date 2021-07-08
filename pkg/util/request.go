@@ -1,18 +1,38 @@
 package util
 
 import (
+	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"github.com/jweny/pocassist/pkg/cel/proto"
 	"github.com/jweny/pocassist/pkg/conf"
 	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/valyala/fasthttp"
+	"golang.org/x/time/rate"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+// 限制请求速率
+var limiter *rate.Limiter
+
+func InitRate() {
+	msQps := conf.GlobalConfig.HttpConfig.MaxQps  / 10
+	limit := rate.Every(100 * time.Millisecond)
+	limiter = rate.NewLimiter(limit, msQps)
+}
+
+func LimitWait() {
+	limiter.Wait(context.Background())
+}
+
 
 type clientDoer interface {
 	// 不跟随重定向
@@ -194,6 +214,7 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 }
 
 func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, error) {
+	LimitWait()
 	defer fasthttp.ReleaseRequest(req)
 	bodyLen := len(req.Body())
 	if bodyLen > 0 {
@@ -218,7 +239,7 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 		err = fasthttpClient.DoTimeout(req, resp, time.Duration(timeout)*time.Second)
 	}
 	if err != nil {
-		log.Error("util/requests.go:DoFasthttpRequest fasthttp client doRequest error", req.RequestURI(),err)
+		log.Error("util/requests.go:DoFasthttpRequest fasthttp client doRequest error", string(req.RequestURI()),err)
 		return nil, err
 	}
 
@@ -297,7 +318,7 @@ func CopyRequest(req *http.Request, dstRequest *fasthttp.Request, data []byte) e
 }
 
 func GenOriginalReq(url string) (*http.Request, error) {
-
+	// 生成原始请求
 	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
 	} else {
 		url = "http://" + url
@@ -307,9 +328,93 @@ func GenOriginalReq(url string) (*http.Request, error) {
 		log.Error("util/requests.go:GenOriginalReq original request gen error", url, err)
 		return nil, err
 	}
+	originalReq.Header.Set("Host", originalReq.Host)
+	originalReq.Header.Set("Accept-Encoding", "gzip, deflate")
+	originalReq.Header.Set("Accept","*/*")
 	originalReq.Header.Set("User-Agent", conf.GlobalConfig.HttpConfig.Headers.UserAgent)
+	originalReq.Header.Set("Accept-Language","en")
+	originalReq.Header.Set("Connection","close")
 
 	return originalReq, nil
 }
 
+func VerifyTargetConnection(originalReq *http.Request) bool {
+	fastReq := fasthttp.AcquireRequest()
+	fastResp := fasthttp.AcquireResponse()
+	oriData, err := GetOriginalReqBody(originalReq)
+	if err != nil {
+		return false
+	}
+	err = CopyRequest(originalReq, fastReq, oriData)
+	if err != nil {
+		return false
+	}
+	timeout := conf.GlobalConfig.HttpConfig.HttpTimeout
+	// 检测原始请求
+	err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
+	if err != nil {
+		// 检测原始请求 + index.php
+		uri := string(fastReq.RequestURI())
+		if uri != "" && strings.HasSuffix(uri, "/") {
+			uri = fmt.Sprint(uri, "index.php")
+		} else {
+			uri = fmt.Sprint(uri, "/index.php")
+		}
+		fastReq.SetRequestURI(uri)
+		err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func GetOriginalReqBody(originalReq *http.Request) ([]byte, error){
+	var data []byte
+	if originalReq.Body != nil && originalReq.Body != http.NoBody {
+		data, err := ioutil.ReadAll(originalReq.Body)
+		if err != nil {
+			return nil, err
+		}
+		originalReq.Body = ioutil.NopCloser(bytes.NewBuffer(data))
+	}
+	return data, nil
+}
+
+
+func DealMultipart(contentType string, ruleBody string) (result string, err error) {
+	errMsg := ""
+	// 处理multipart的/n
+	re := regexp.MustCompile(`(?m)multipart\/form-Data; boundary=(.*)`)
+	match := re.FindStringSubmatch(contentType)
+	if len(match) != 2 {
+		errMsg = "no boundary in content-type"
+		//logging.GlobalLogger.Error("util/requests.go:DealMultipart Err", errMsg)
+		return "", errors.New(errMsg)
+	}
+	boundary := "--" + match[1]
+	multiPartContent := ""
+
+	// 处理rule
+	multiFile := strings.Split(ruleBody, boundary)
+	if len(multiFile) == 0 {
+		errMsg = "ruleBody.Body multi content format err"
+		//logging.GlobalLogger.Error("util/requests.go:DealMultipart Err", errMsg)
+		return multiPartContent, errors.New(errMsg)
+	}
+
+	for _, singleFile := range multiFile {
+		//	处理单个文件
+		//	文件头和文件响应
+		spliteTmp := strings.Split(singleFile,"\n\n")
+		if len(spliteTmp) == 2 {
+			fileHeader := spliteTmp[0]
+			fileBody := spliteTmp[1]
+			fileHeader = strings.Replace(fileHeader,"\n","\r\n",-1)
+			multiPartContent += boundary + fileHeader + "\r\n\r\n" + strings.TrimRight(fileBody ,"\n") + "\r\n"
+		}
+	}
+	multiPartContent += boundary + "--" + "\r\n"
+	return multiPartContent, nil
+}
 

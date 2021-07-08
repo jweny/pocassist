@@ -22,9 +22,9 @@ func ExecExpressionHandle(ctx controllerContext){
 		return
 	}
 	if poc.Groups != nil {
-		result, err = ctx.Groups()
+		result, err = ctx.Groups(ctx.IsDebug())
 	} else {
-		result, err = ctx.Rules(poc.Rules)
+		result, err = ctx.Rules(poc.Rules,ctx.IsDebug())
 	}
 	if err != nil {
 		log.Error("[rule/handle.go:ExecExpressionHandle error] ", err)
@@ -90,9 +90,7 @@ func Setup() {
 	Handles[AffectScript] = []HandlerFunc{ExecScriptHandle}
 	Handles[AffectAppendParameter] = []HandlerFunc{ExecExpressionHandle}
 	Handles[AffectReplaceParameter] = []HandlerFunc{ExecExpressionHandle}
-	// 速率限制
-	InitRate()
-	InitOreqChannel()
+	InitTaskChannel()
 }
 
 func getHandles(affect string) []HandlerFunc {

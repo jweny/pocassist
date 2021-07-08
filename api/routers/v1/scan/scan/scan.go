@@ -65,9 +65,15 @@ func Url(c *gin.Context) {
 		Target:  scan.Target,
 	}
 	db.AddTask(&task)
+	taskItem := &rule.TaskItem{
+		OriginalReq: oreq,
+		Plugins:     plugins,
+		Task:        &task,
+	}
+
 	c.JSON(msg.SuccessResp("任务下发成功"))
-	rule.OriginalReqChannel <- oreq
-	go rule.RunPlugins(plugins, &task)
+	go rule.TaskProducer(taskItem)
+	go rule.TaskConsumer()
 	return
 }
 
@@ -141,10 +147,15 @@ func Raw(c *gin.Context) {
 		Target:  oReqUrl,
 	}
 	db.AddTask(&task)
-	c.JSON(msg.SuccessResp("任务下发成功"))
+	taskItem := &rule.TaskItem{
+		OriginalReq: oreq,
+		Plugins:     plugins,
+		Task:        &task,
+	}
 
-	rule.OriginalReqChannel <- oreq
-	go rule.RunPlugins(plugins, &task)
+	c.JSON(msg.SuccessResp("任务下发成功"))
+	go rule.TaskProducer(taskItem)
+	go rule.TaskConsumer()
 	return
 }
 
@@ -187,7 +198,11 @@ func List(c *gin.Context) {
 
 	// 加载poc
 	plugins, err := rule.LoadDbPlugin(scanType, vulList)
-	if err != nil || plugins == nil{
+	if err != nil{
+		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
+		return
+	}
+	if len(plugins) == 0 {
 		c.JSON(msg.ErrResp("插件加载失败" + err.Error()))
 		return
 	}
@@ -222,8 +237,13 @@ func List(c *gin.Context) {
 	c.JSON(msg.SuccessResp("任务下发成功"))
 
 	for index, oreq := range oReqList {
-		rule.OriginalReqChannel <- oreq
-		go rule.RunPlugins(plugins, taskList[index])
+		taskItem := &rule.TaskItem{
+			OriginalReq: oreq,
+			Plugins:     plugins,
+			Task:        taskList[index],
+		}
+		go rule.TaskProducer(taskItem)
+		go rule.TaskConsumer()
 	}
 	return
 }

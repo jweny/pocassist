@@ -2,24 +2,48 @@ package rule
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/jweny/pocassist/pkg/db"
 	log "github.com/jweny/pocassist/pkg/logging"
 	"github.com/jweny/pocassist/pkg/util"
+	"net/http"
+	"net/url"
 )
 
-func WriteTaskResult(scanItem *ScanItem, result *util.ScanResult) {
-	log.Info("[rule/poc.go:WriteTaskResult scan finish]", scanItem.OriginalReq.URL.String(), scanItem.Plugin.JsonPoc.Name, result)
-	vulnerable := false
-	if result != nil {
-		vulnerable = result.Vulnerable
-	}
-	detail, _:= json.Marshal(result)
+type ScanItem struct {
+	OriginalReq *http.Request // 原始请求
+	Plugin      *Plugin       // 检测插件
+	Task        *db.Task      // 所属任务
+}
 
+func (item *ScanItem) Verify() error {
+	errMsg := ""
+	if item.Task == nil {
+		errMsg = "task create fail"
+		log.Error("[rule/parallel.go:Verify error]", errMsg)
+		return errors.New(errMsg)
+	}
+	if item.OriginalReq == nil{
+		errMsg = "not original request"
+		log.Error("[rule/parallel.go:Verify error]", errMsg)
+		return errors.New(errMsg)
+	}
+	if item.Plugin == nil {
+		errMsg = "not plugin"
+		log.Error("[rule/parallel.go:Verify error]", errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
+
+
+func WriteTaskResult(scanItem *ScanItem, result *util.ScanResult) {
+	detail, _:= json.Marshal(result)
 	res := db.Result{
 		Detail:   detail,
 		PluginId:  scanItem.Plugin.VulId,
 		PluginName:	scanItem.Plugin.JsonPoc.Name,
-		Vul:	vulnerable,
+		Vul:	result.Vulnerable,
 		TaskId: scanItem.Task.Id,
 	}
 	db.AddResult(res)
@@ -27,11 +51,11 @@ func WriteTaskResult(scanItem *ScanItem, result *util.ScanResult) {
 }
 
 // 执行单个poc
-func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
+func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) {
 	scanItem := inter.(*ScanItem)
 	err = scanItem.Verify()
 	if err != nil {
-		log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+		log.Error("[rule/poc.go:RunPoc scan item verify error] ", err)
 		return nil, err
 	}
 	log.Info("[rule/poc.go:RunPoc current plugin]", scanItem.Plugin.JsonPoc.Name)
@@ -41,7 +65,7 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 
 	err = requestController.Init(scanItem.OriginalReq)
 	if err != nil {
-		log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+		log.Error("[rule/poc.go:RunPoc request controller init error] ", err)
 		return nil, err
 	}
 
@@ -49,14 +73,14 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 
 	err = celController.Init(scanItem.Plugin.JsonPoc)
 	if err != nil {
-		log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+		log.Error("[rule/poc.go:RunPoc cel controller init error] ", err)
 		return nil, err
 	}
 
 	err = celController.InitSet(scanItem.Plugin.JsonPoc, requestController.New)
 	if err != nil {
 		util.RequestPut(requestController.New)
-		log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+		log.Error("[rule/poc.go:RunPoc cel controller init set error] ", err)
 		return nil, err
 	}
 	switch scanItem.Plugin.Affects {
@@ -65,20 +89,25 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 		{
 			err := requestController.InitOriginalQueryParams()
 			if err != nil {
-				log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+				log.Error("[rule/poc.go:RunPoc init original request params error] ", err)
 				return nil, err
 			}
 			controller := InitPocController(&requestController, scanItem.Plugin, &celController, handles)
+			controller.Debug = debug
 			paramPayloadList := scanItem.Plugin.JsonPoc.Params
 
-			for field := range requestController.OriginalQueryParams {
+			originalParamFields, err := url.ParseQuery(requestController.OriginalQueryParams)
+			if err != nil {
+				log.Error("[rule/poc.go:RunPoc params query parse error] ", err)
+				return nil, err
+			}
+
+			for field := range originalParamFields {
 				for _, payload := range paramPayloadList {
-					// 限速
-					LimitWait()
 					log.Info("[rule/poc.go:RunPoc param payload]", payload)
 					err = requestController.FixQueryParams(field, payload, controller.Plugin.Affects)
 					if err != nil {
-						log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
+						log.Error("[rule/poc.go:RunPoc fix request params error] ", err)
 						continue
 					}
 					controller.Next()
@@ -89,17 +118,18 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 						PutController(controller)
 						return result, nil
 					}
+					controller.Index = 0
 				}
 			}
 			// 没漏洞
-			WriteTaskResult(scanItem, &util.InVulnerableResult)
-			return &util.InVulnerableResult, nil
+			result = &util.InVulnerableResult
+			PutController(controller)
+			return result, nil
 		}
-	case AffectDirectory, AffectServer, AffectURL:
+	case AffectDirectory, AffectServer, AffectURL, AffectContent:
 		{
-			// todo 报错 刷任务状态
-			LimitWait()
 			controller := InitPocController(&requestController, scanItem.Plugin, &celController, handles)
+			controller.Debug = debug
 			controller.Next()
 			if controller.IsAborted() {
 				// 存在漏洞
@@ -107,17 +137,22 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 				WriteTaskResult(scanItem, result)
 				PutController(controller)
 				return result, nil
-			} else {
-				// 没漏洞
-				WriteTaskResult(scanItem, &util.InVulnerableResult)
+			} else if debug{
+				// debug 没漏洞
+				result = util.DebugVulnerableHttpResult(controller.GetOriginalReq().URL.String(), "", controller.Request.Raw)
 				PutController(controller)
-				return &util.InVulnerableResult, nil
+				return result, nil
+			}else {
+				// 没漏洞
+				result = &util.InVulnerableResult
+				PutController(controller)
+				return result, nil
 			}
 		}
 	case AffectScript:
 		{
-			LimitWait()
 			controller := InitPocController(&requestController, scanItem.Plugin, &celController, handles)
+			controller.Debug = debug
 			controller.Next()
 			if controller.IsAborted() && controller.ScriptResult != nil {
 				// 存在漏洞 保存结果
@@ -133,7 +168,6 @@ func RunPoc(inter interface{}) (result *util.ScanResult, err error) {
 				return result, nil
 			} else {
 				// 没漏洞
-				WriteTaskResult(scanItem, &util.InVulnerableResult)
 				PutController(controller)
 				return &util.InVulnerableResult, nil
 			}
