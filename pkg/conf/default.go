@@ -55,7 +55,7 @@ dbConfig:
     database: "pocassist"
     # 数据库连接超时时间
     timeout: "3s"
-  # 是否使用已有漏洞库
+  # 是否使用公共漏洞库
   enableDefault: true
 
 # 插件配置

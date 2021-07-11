@@ -78,6 +78,8 @@ github.com/hashicorp/hcl/json/token
 github.com/jinzhu/inflection
 # github.com/jinzhu/now v1.1.2
 github.com/jinzhu/now
+# github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
+github.com/jlaffaye/ftp
 # github.com/josharian/intern v1.0.0
 github.com/josharian/intern
 # github.com/json-iterator/go v1.1.9

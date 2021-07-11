@@ -13,6 +13,7 @@ require (
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/golang/protobuf v1.5.0
 	github.com/google/cel-go v0.7.3
+	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

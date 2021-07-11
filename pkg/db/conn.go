@@ -54,7 +54,7 @@ func Setup() {
 			defaultSqliteFile := path.Join(dir, "pocassist.db")
 			// 检测 sqlite 文件是否存在
 			if !file.Exists(defaultSqliteFile) {
-				log.Fatalf("db.Setup err: use default db, but pocassist.db not exist")
+				log.Fatalf("db.Setup err: pocassist.db not exist, download at https://github.com/jweny/pocassistdb/releases")
 			}
 		}
 
