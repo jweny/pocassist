@@ -336,7 +336,32 @@ func UploadYaml(c *gin.Context) {
 		c.JSON(msg.ErrResp("yaml解析失败，请检查后重试"))
 		return
 	}
+	// todo slice to map
+	toMap := TempPoc{
+		Params: poc.Params,
+		Name:   poc.Name,
+		Set:    SliceToMap(poc.Set),
+		Rules:  poc.Rules,
+		Groups: poc.Groups,
+		Detail: rule.Detail{},
+	}
 	data := make(map[string]interface{})
-	data["json_poc"] = poc
+	data["json_poc"] = toMap
 	c.JSON(msg.SuccessResp(data))
+}
+
+type TempPoc struct {
+	Params	[]string	 	  `json:"params"`
+	Name   string             `json:"name"`
+	Set    map[string]string  `json:"set"`
+	Rules  []rule.Rule        `json:"rules"`
+	Groups  map[string][]rule.Rule `json:"groups"`
+	Detail rule.Detail             `json:"detail"`
+}
+func SliceToMap(slice yaml.MapSlice) map[string]string {
+	m := make(map[string]string)
+	for _,v := range slice{
+		m[v.Key.(string)] = v.Value.(string)
+	}
+	return m
 }
