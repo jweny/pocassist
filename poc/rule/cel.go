@@ -52,7 +52,7 @@ func (cc *CelController) InitSet(poc *Poc, newReq *proto.Request) (err error) {
 		}
 		out, err := cel2.Evaluate(cc.Env, value, cc.ParamMap)
 		if err != nil {
-			continue
+			return err
 		}
 		switch value := out.Value().(type) {
 		// set value 无论是什么类型都先转成string

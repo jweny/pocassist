@@ -371,7 +371,7 @@ type CustomLib struct {
 func InitCelOptions() CustomLib {
 	custom := CustomLib{}
 	custom.envOptions = []cel.EnvOption{
-		cel.Container("utils"),
+		cel.Container("proto"),
 		//	类型注入
 		cel.Types(
 			&proto.UrlType{},
@@ -381,8 +381,8 @@ func InitCelOptions() CustomLib {
 		),
 		// 定义变量变量
 		cel.Declarations(
-			decls.NewVar("request", decls.NewObjectType("utils.Request")),
-			decls.NewVar("response", decls.NewObjectType("utils.Response")),
+			decls.NewVar("request", decls.NewObjectType("proto.Request")),
+			decls.NewVar("response", decls.NewObjectType("proto.Response")),
 		),
 		// 定义
 		cel.Declarations(
@@ -407,7 +407,6 @@ func InitCelOptions() CustomLib {
 }
 
 //	如果有set：追加set变量到 cel options
-//	这里得注意下 reverse的顺序问题 map可能是随机的
 func (c *CustomLib) AddRuleSetOptions(args []yaml.MapItem) {
 	for _, arg := range args {
 		// 在执行之前是不知道变量的类型的，所以统一声明为字符型
@@ -419,7 +418,7 @@ func (c *CustomLib) AddRuleSetOptions(args []yaml.MapItem) {
 		if strings.HasPrefix(v, "randomInt") {
 			d = decls.NewVar(k, decls.Int)
 		} else if strings.HasPrefix(v, "newReverse") {
-			d = decls.NewVar(k, decls.NewObjectType("util.Reverse"))
+			d = decls.NewVar(k, decls.NewObjectType("proto.Reverse"))
 		} else {
 			d = decls.NewVar(k, decls.String)
 		}
