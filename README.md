@@ -33,11 +33,10 @@ http://127.0.0.1:1231
 
 ## 微信
 
-如果在部署 / 使用过程中遇到问题，或者有好的想法或建议，欢迎添加进群沟通，或者添加我的微信进行交流。
+如果在使用过程中遇到问题，或者有好的想法或建议，欢迎添加进群沟通（微信群满了，加我微信拉吧)
 
 <p align="left">
    <img alt="jweny wechat: bad-lucifer" src="docs/pic/wechat.jpeg" width="150"/>
-   <img alt="jweny wechat: bad-lucifer" src="docs/pic/群二维码.jpeg" width="150"/>
 </p>
 
 ## Demo
