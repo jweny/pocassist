@@ -154,7 +154,7 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 			controller := InitPocController(&requestController, scanItem.Plugin, &celController, handles)
 			controller.Debug = debug
 			controller.Next()
-			if controller.IsAborted() && controller.ScriptResult != nil {
+			if controller.IsAborted() && controller.ScriptResult != nil && controller.ScriptResult.Vulnerable {
 				// 存在漏洞 保存结果
 				result = &util.ScanResult{
 					Vulnerable: controller.ScriptResult.Vulnerable,
@@ -164,6 +164,11 @@ func RunPoc(inter interface{}, debug bool) (result *util.ScanResult, err error) 
 					RespMsg:    controller.ScriptResult.RespMsg,
 				}
 				WriteTaskResult(scanItem, controller.ScriptResult)
+				PutController(controller)
+				return result, nil
+			} else if debug {
+				// debug 没漏洞
+				result = util.DebugVulnerableHttpResult(controller.GetOriginalReq().URL.String(), "", controller.Request.Raw)
 				PutController(controller)
 				return result, nil
 			} else {
