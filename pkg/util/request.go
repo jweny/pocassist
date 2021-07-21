@@ -107,7 +107,11 @@ func (r *ReqFormat) FormatContent() string {
 
 	line1 := fmt.Sprintf("%s %s %s\r\n", valueOrDefault(string(req.Header.Method()), "GET"),
 		reqURI, protocol)
-	line2 := fmt.Sprintf("%s: %s\r\n", "Host", string(req.Host()))
+	line2 := ""
+	// 避免打印的 Host 头重复
+	if !strings.Contains(tmpList[1], "Host:"){
+		line2 = fmt.Sprintf("%s: %s\r\n", "Host", string(req.Host()))
+	}
 	requestRaw := line1 + line2 + tmpList[1] + body
 	return requestRaw
 }
@@ -243,6 +247,13 @@ func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, e
 		return nil, err
 	}
 
+	// 处理响应 body: gzip deflate 解包
+	fixBody, err := UnzipResponseBody(resp)
+	if err != nil {
+		log.Error("util/requests.go:DoFasthttpRequest fasthttp client dealResponseBody error", string(req.RequestURI()),err)
+		return nil, err
+	}
+	resp.SetBody(fixBody)
 	curResp, err := ParseFasthttpResponse(resp, req)
 	// 添加请求和响应报文
 	if err != nil {
@@ -315,6 +326,24 @@ func CopyRequest(req *http.Request, dstRequest *fasthttp.Request, data []byte) e
 	}
 	dstRequest.SetBodyRaw(data)
 	return nil
+}
+
+// UnzipResponseBody 返回解压缩的 Body : 目前支持 identity gzip deflate
+func UnzipResponseBody(response *fasthttp.Response) ([]byte, error) {
+	contentEncoding := strings.ToLower(string(response.Header.Peek("Content-Encoding")))
+	var body []byte
+	var err error
+	switch contentEncoding {
+	case "", "none", "identity":
+		body, err = response.Body(), nil
+	case "gzip":
+		body, err = response.BodyGunzip()
+	case "deflate":
+		body, err = response.BodyInflate()
+	default:
+		body, err = []byte{}, fmt.Errorf("unsupported Content-Encoding: %v", contentEncoding)
+	}
+	return body, err
 }
 
 func GenOriginalReq(url string) (*http.Request, error) {
