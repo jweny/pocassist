@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/valyala/fasthttp"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -21,8 +20,8 @@ func TestVerifyTargetConnection(t *testing.T) {
 	//	fmt.Println(0)
 	//}
 
-	originalReq, _ := http.NewRequest("GET", "http://www.jweny.com/", nil)
-	fmt.Println(VerifyTargetConnection(originalReq))
+	//originalReq, _ := http.NewRequest("GET", "http://www.jweny.com/", nil)
+	//fmt.Println(VerifyTargetConnection(originalReq))
 
 
 	//req := fasthttp.AcquireRequest()

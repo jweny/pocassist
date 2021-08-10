@@ -77,7 +77,7 @@ const ConfigFileName = "config.yaml"
 const ServiceName = "pocassist"
 const Website = "https://pocassist.jweny.top/"
 
-const Version = "1.0.2"
+const Version = "1.0.4"
 const Banner = `
                                _     _
  _ __   ___   ___ __ _ ___ ___(_)___| |_

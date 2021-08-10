@@ -85,8 +85,9 @@ func ShiroJavaUnserilize(args *ScriptScanArgs) (*util.ScanResult, error) {
 		}
 
 		isShiro := false
-		for key, _ := range resp.Headers {
-			if key == "rememberMe" {
+		if _, ok := resp.Headers["set-cookie"]; ok {
+			v := resp.Headers["set-cookie"]
+			if strings.Contains(v,"rememberMe") {
 				isShiro = true
 			}
 		}

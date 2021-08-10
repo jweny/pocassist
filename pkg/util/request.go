@@ -11,6 +11,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"golang.org/x/time/rate"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -217,6 +218,8 @@ func ParseFasthttpResponse(originalResp *fasthttp.Response, req *fasthttp.Reques
 	return resp, nil
 }
 
+
+
 func DoFasthttpRequest(req *fasthttp.Request, redirect bool) (*proto.Response, error) {
 	LimitWait()
 	defer fasthttp.ReleaseRequest(req)
@@ -346,25 +349,12 @@ func UnzipResponseBody(response *fasthttp.Response) ([]byte, error) {
 	return body, err
 }
 
-func GenOriginalReq(url string) (*http.Request, error) {
-	// 生成原始请求
-	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-	} else {
-		url = "http://" + url
-	}
-	originalReq, err := http.NewRequest("GET", url, nil)
+func VerifyPortConnection(targetAddr string) bool {
+	_, err := TcpSend(targetAddr, nil)
 	if err != nil {
-		log.Error("util/requests.go:GenOriginalReq original request gen error", url, err)
-		return nil, err
+		return false
 	}
-	originalReq.Header.Set("Host", originalReq.Host)
-	originalReq.Header.Set("Accept-Encoding", "gzip, deflate")
-	originalReq.Header.Set("Accept","*/*")
-	originalReq.Header.Set("User-Agent", conf.GlobalConfig.HttpConfig.Headers.UserAgent)
-	originalReq.Header.Set("Accept-Language","en")
-	originalReq.Header.Set("Connection","close")
-
-	return originalReq, nil
+	return true
 }
 
 func VerifyTargetConnection(originalReq *http.Request) bool {
@@ -396,6 +386,67 @@ func VerifyTargetConnection(originalReq *http.Request) bool {
 		}
 	}
 	return true
+}
+
+func VerifyInputTarget(target string) (bool, string) {
+	// 连通性校验改到这里
+	// 1.不带https/http协议 && 不带端口：放弃检查(icmp限制太多)
+	// 2.带端口：tcp 端口
+	// 3.带https/http协议不带端口：tcp 80/443
+	// 生成原始请求
+	verify := true
+	// 有端口
+	if len(strings.Split(target,":")) > 1 {
+		// 带端口
+		if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://"){
+
+		}else {
+			target = "http://" + target
+		}
+	} else {
+		// 不带端口
+		if strings.HasPrefix(target, "http://"){
+			//	输入 http
+			verify = VerifyPortConnection(net.JoinHostPort(target, "80"))
+		} else if strings.HasPrefix(target, "https://") {
+			// 输入 https
+			verify = VerifyPortConnection(net.JoinHostPort(target, "443"))
+		} else {
+			// 不校验
+			target = "http://" + target
+		}
+	}
+	return verify, target
+}
+
+func GenOriginalReq(target string) (*http.Request, error) {
+	verify, fixTarget := VerifyInputTarget(target)
+	if !verify {
+		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s can not connect", target)
+		log.Error(errMsg)
+		return nil, errMsg
+	}
+	originalReq, err := http.NewRequest("GET", fixTarget, nil)
+	if err != nil {
+		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s original request gen error %v", target, err)
+		log.Error(errMsg)
+		return nil, errMsg
+	}
+	originalReq.Header.Set("Host", originalReq.Host)
+	originalReq.Header.Set("Accept-Encoding", "gzip, deflate")
+	originalReq.Header.Set("Accept","*/*")
+	originalReq.Header.Set("User-Agent", conf.GlobalConfig.HttpConfig.Headers.UserAgent)
+	originalReq.Header.Set("Accept-Language","en")
+	originalReq.Header.Set("Connection","close")
+
+	// 检查fixUrl连通性
+	verify = VerifyTargetConnection(originalReq)
+	if !verify {
+		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s can not connect", fixTarget)
+		log.Error(errMsg)
+		return nil, errMsg
+	}
+	return originalReq, nil
 }
 
 func GetOriginalReqBody(originalReq *http.Request) ([]byte, error){

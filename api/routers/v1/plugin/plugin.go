@@ -234,12 +234,7 @@ func Run(c *gin.Context) {
 
 	oreq, err := util.GenOriginalReq(run.Target)
 	if err != nil {
-		c.JSON(msg.ErrResp("原始请求生成失败"))
-		return
-	}
-	verify := util.VerifyTargetConnection(oreq)
-	if !verify {
-		c.JSON(msg.ErrResp("测试目标连通性测试不通过"))
+		c.JSON(msg.ErrResp("目标连通性不通过/原始请求生成失败"))
 		return
 	}
 	poc, err := rule.ParseJsonPoc(run.JsonPoc)

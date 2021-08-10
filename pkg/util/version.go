@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// 版本对比方法
+// SingleVersionCompare 版本对比方法
 // <=0没有漏洞    >0有漏洞
 func SingleVersionCompare(verCurrent string, verVul string) (int, error) {
 	partsCurrent := strings.Split(verCurrent, ".")

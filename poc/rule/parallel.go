@@ -5,7 +5,6 @@ import (
 	"github.com/jweny/pocassist/pkg/conf"
 	"github.com/jweny/pocassist/pkg/db"
 	log "github.com/jweny/pocassist/pkg/logging"
-	"github.com/jweny/pocassist/pkg/util"
 	"github.com/panjf2000/ants/v2"
 	"gopkg.in/yaml.v2"
 	"net/http"
@@ -126,13 +125,6 @@ func TaskConsumer(){
 		err := item.Verify()
 		if err != nil {
 			log.Error("[rule/poc.go:WriteTaskError scan error] ", err)
-			db.ErrorTask(item.Task.Id)
-			continue
-		}
-		// 检查可用性
-		verify := util.VerifyTargetConnection(item.OriginalReq)
-		if !verify {
-			log.Error("[rule/parallel.go:TaskConsumer target can not connect]", item.OriginalReq.URL.String())
 			db.ErrorTask(item.Task.Id)
 			continue
 		}
