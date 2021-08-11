@@ -357,36 +357,37 @@ func VerifyPortConnection(targetAddr string) bool {
 	return true
 }
 
-func VerifyTargetConnection(originalReq *http.Request) bool {
-	fastReq := fasthttp.AcquireRequest()
-	fastResp := fasthttp.AcquireResponse()
-	oriData, err := GetOriginalReqBody(originalReq)
-	if err != nil {
-		return false
-	}
-	err = CopyRequest(originalReq, fastReq, oriData)
-	if err != nil {
-		return false
-	}
-	timeout := conf.GlobalConfig.HttpConfig.HttpTimeout
-	// 检测原始请求
-	err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
-	if err != nil {
-		// 检测原始请求 + index.php
-		uri := string(fastReq.RequestURI())
-		if uri != "" && strings.HasSuffix(uri, "/") {
-			uri = fmt.Sprint(uri, "index.php")
-		} else {
-			uri = fmt.Sprint(uri, "/index.php")
-		}
-		fastReq.SetRequestURI(uri)
-		err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
-		if err != nil {
-			return false
-		}
-	}
-	return true
-}
+// 以后接被动扫描插件的时候用
+//func VerifyTargetConnection(originalReq *http.Request) bool {
+//	fastReq := fasthttp.AcquireRequest()
+//	fastResp := fasthttp.AcquireResponse()
+//	oriData, err := GetOriginalReqBody(originalReq)
+//	if err != nil {
+//		return false
+//	}
+//	err = CopyRequest(originalReq, fastReq, oriData)
+//	if err != nil {
+//		return false
+//	}
+//	timeout := conf.GlobalConfig.HttpConfig.HttpTimeout
+//	// 检测原始请求
+//	err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
+//	if err != nil {
+//		// 检测原始请求 + index.php
+//		uri := string(fastReq.RequestURI())
+//		if uri != "" && strings.HasSuffix(uri, "/") {
+//			uri = fmt.Sprint(uri, "index.php")
+//		} else {
+//			uri = fmt.Sprint(uri, "/index.php")
+//		}
+//		fastReq.SetRequestURI(uri)
+//		err = fasthttpClient.DoTimeout(fastReq, fastResp, time.Duration(timeout)*time.Second)
+//		if err != nil {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 func VerifyInputTarget(target string) (bool, string) {
 	// 连通性校验改到这里
@@ -438,14 +439,6 @@ func GenOriginalReq(target string) (*http.Request, error) {
 	originalReq.Header.Set("User-Agent", conf.GlobalConfig.HttpConfig.Headers.UserAgent)
 	originalReq.Header.Set("Accept-Language","en")
 	originalReq.Header.Set("Connection","close")
-
-	// 检查fixUrl连通性
-	verify = VerifyTargetConnection(originalReq)
-	if !verify {
-		errMsg := fmt.Errorf("util/requests.go:GenOriginalReq %s can not connect", fixTarget)
-		log.Error(errMsg)
-		return nil, errMsg
-	}
 	return originalReq, nil
 }
 
