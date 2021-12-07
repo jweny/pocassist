@@ -15,6 +15,8 @@ pocassist是一个 Golang 编写的全新开源漏洞测试框架。
 
 🏠[使用文档](https://pocassist.jweny.top/)	⬇️[下载最新版本](https://github.com/jweny/pocassist/releases)
 
+求个志同道合的前端能够一块维护... 有意者 WX 私聊
+
 ## 快速开始
 
 ### 像数 1, 2, 3 一样容易
