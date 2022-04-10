@@ -53,7 +53,7 @@ func ReverseCheck(r *proto.Reverse, timeout int64) bool {
 }
 
 func GetReverseResp(verifyUrl string) bool {
-	notExist := []byte(`"data": []`)
+	notExist := []byte(`"remote_addr"`)
 
 	fastReq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(fastReq)
@@ -65,7 +65,7 @@ func GetReverseResp(verifyUrl string) bool {
 	if err != nil {
 		return false
 	}
-	if !bytes.Contains(resp.Body, notExist) { // api返回结果不为空
+	if bytes.Contains(resp.Body, notExist) { // api返回结果不为空
 		return true
 	}
 	return false
