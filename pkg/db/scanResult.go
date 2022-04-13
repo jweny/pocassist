@@ -57,10 +57,23 @@ func GetResult(page int, pageSize int, field *ResultSearchField) (results []Resu
 		db = db.Where(
 			GlobalDB.Where("detail like ?", "%"+field.Search+"%"))
 	}
+	db = db.Order("id DESC")
 	//	分页
 	if page > 0 && pageSize > 0 {
 		db = db.Offset((page - 1) * pageSize).Limit(pageSize).Find(&results)
 	}
+	return
+}
+
+func GetSingleResult(targetUrl string, pluginId string) (results []Result) {
+	db := GlobalDB.Model(&Result{})
+	if targetUrl != ""{
+		db = db.Where("detail like ?", "%\"target\":\""+targetUrl+"%")
+	}
+	if pluginId != ""{
+		db = db.Where("plugin_id = ?", pluginId)
+	}
+	db.Limit(1).Find(&results)
 	return
 }
 
