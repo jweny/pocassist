@@ -54,6 +54,7 @@ func GetTask(page int, pageSize int, field *TaskSearchField) (tasks []Task) {
 			GlobalDB.Where("remarks like ?", "%"+field.Search+"%").
 				Or("Target like ?", "%"+field.Search+"%"))
 	}
+	db = db.Order("id DESC")
 	//	分页
 	if page > 0 && pageSize > 0 {
 		db = db.Offset((page - 1) * pageSize).Limit(pageSize).Find(&tasks)
