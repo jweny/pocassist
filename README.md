@@ -15,8 +15,6 @@ pocassist是一个 Golang 编写的全新开源漏洞测试框架。
 
 🏠[使用文档](https://pocassist.jweny.top/)	⬇️[下载最新版本](https://github.com/jweny/pocassist/releases)
 
-求个志同道合的前端能够一块维护... 有意者 WX 私聊
-
 ## 快速开始
 
 ### 像数 1, 2, 3 一样容易
@@ -30,16 +28,6 @@ http://127.0.0.1:1231
 ```
 
 建议使用[pocassistdb](https://github.com/jweny/pocassistdb)作为漏洞库。⬇️[下载漏洞库最新版本](https://github.com/jweny/pocassistdb/releases/)，并在`config.yaml `的`sqlite`项配置路径。
-
-有想一块维护poc的师傅也可直接向该项目提PR。
-
-## 微信
-
-如果在使用过程中遇到问题，或者有好的想法或建议，欢迎添加进群沟通（微信群满了，加我微信拉吧)
-
-<p align="left">
-   <img alt="jweny wechat: bad-lucifer" src="docs/pic/wechat.jpeg" width="150"/>
-</p>
 
 ## Demo
 
