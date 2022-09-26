@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
-	"os"
 	"path"
 	"path/filepath"
 )
@@ -46,12 +45,12 @@ func Setup() {
 			log.Fatalf("db.Setup err: config.yaml sqlite config not set")
 		}
 		if dbConfig.EnableDefault {
-			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+			dir, err := filepath.Abs(filepath.Dir("./pocassist.db"))
 			if err != nil {
 				log.Fatalf("db.Setup, fail to get current path: %v", err)
 			}
 			//配置文件路径 当前文件夹 + config.yaml
-			defaultSqliteFile := path.Join(dir, "pocassist.db")
+			defaultSqliteFile := path.Join(dir)
 			// 检测 sqlite 文件是否存在
 			if !file.Exists(defaultSqliteFile) {
 				log.Fatalf("db.Setup err: pocassist.db not exist, download at https://github.com/jweny/pocassistdb/releases")
@@ -81,4 +80,3 @@ func Setup() {
 		GlobalDB.Logger = logger.Default.LogMode(logger.Silent)
 	}
 }
-
