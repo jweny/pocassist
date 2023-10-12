@@ -12,10 +12,10 @@ import (
 func ReadingLines(filename string) []string {
 	var result []string
 	file, err := os.Open(filename)
-	defer file.Close()
 	if err != nil {
 		return result
 	}
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
